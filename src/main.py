@@ -1,27 +1,22 @@
+# imports
+from state import State
+from strategy import strategy
+import constants
+
+
 def stop(n):
-    if n >= 100:
+    if n >= constants.max_episodes:
         return True
     return False
 
 
-def get_initial_state():
-    return 0
-
-
-def strategy(state):
-    return 0
-
-
-def update_state(state, action):
-    return state
-
-
 def main():
     episode_no = 0
-    state = get_initial_state()
+    state = State.initial_state()
     while not stop(episode_no):
+        print(str(state.aoi_sender) + " : " + str(state.aoi_receiver))
         action = strategy(state)
-        state = update_state(state, action)
+        state = state.update(action)
         episode_no += 1
 
 
