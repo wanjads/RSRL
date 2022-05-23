@@ -11,13 +11,15 @@ def stop(n):
 
 
 def main():
+    cumulative_cost = 0
     episode_no = 0
     state = State.initial_state()
     while not stop(episode_no):
-        print(str(state.aoi_sender) + " : " + str(state.aoi_receiver))
         action = strategy(state)
-        state = state.update(action)
+        state, cost = state.update(action)
+        cumulative_cost += cost
         episode_no += 1
+        print(cumulative_cost/episode_no)
 
 
 if __name__ == '__main__':

@@ -16,15 +16,18 @@ class State:
 
     # a state update dependent on the decision to send
     def update(self, action):
+        cost = 0
         self.aoi_sender += 1
         self.aoi_receiver += 1
         if random.random() < constants.new_package_prob:
             self.aoi_sender = 0
         if action:
+            cost += constants.energy_weight * 1
             if random.random() < constants.send_prob:
                 self.aoi_receiver = self.aoi_sender + 1
 
-        return self
+        cost += self.aoi_receiver
+        return self, cost
 
     # the initial state
     @staticmethod
