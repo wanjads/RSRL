@@ -55,7 +55,7 @@ def main():
         loss = strategy.update(state, action, cost, episode_no)
         losses += [loss]
 
-        if episode_no / 100 == 0:
+        if episode_no % 20 == 0:
             print(str(episode_no/constants.max_episodes * 100) + " %")
 
     plot_loss(losses)
