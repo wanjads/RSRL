@@ -1,15 +1,25 @@
+import random
+
 from state import State
+from network import NN
+import numpy as np
 
 
 class Strategy:
 
     def __init__(self):
-        self.new_package_prob_estimate = 0
-        self.sending_prob_estimate = 0
+        self.input_size = 5
+        self.new_package_prob_estimate = 0.5
+        self.sending_prob_estimate = 0.5
         self.no_of_tries_to_send = 0
-        # here, we store the weights of the network
+        # here, we initialize the NN
+        self.nn = NN(self.input_size)
+        self.inp = []
 
-    def update(self, state, action, episode_no):
+    def update(self, state, action, cost, episode_no):
+
+        # train nn
+        loss = self.nn.train(self.inp, action, cost)
 
         # did a new package arrive at the sender?
         new_package_sender = (state.aoi_sender == 0)
@@ -31,5 +41,17 @@ class Strategy:
             self.no_of_tries_to_send += 1
             self.sending_prob_estimate = successful_sends / self.no_of_tries_to_send
 
-    def action(self, state, episode_no):
-        return 1
+        return loss
+
+    def state_to_input(self, state):
+        return np.array([state.aoi_sender,
+                         state.aoi_receiver,
+                         state.last_action,
+                         self.new_package_prob_estimate,
+                         self.sending_prob_estimate]).reshape((1, 5))
+
+    def action(self, state):
+        self.inp = self.state_to_input(state)
+        predicted_costs = self.nn.out(self.inp)[0]
+        action = random.randint(0, 1)
+        return action
