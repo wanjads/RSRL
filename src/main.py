@@ -19,12 +19,19 @@ def stop(n):
 
 def plot_loss(losses):
 
+    # calculate moving average
+    averages = []
+    length = constants.moving_average_length
+    for i in range(len(losses) - length + 1):
+        average = sum(losses[i:i + length]) / length
+        averages.append(average)
+
     df = pd.DataFrame(dict(
-        episode=[i for i in range(constants.max_episodes)],
-        loss=losses
+        episode=range(constants.max_episodes - length + 1),
+        loss=averages
     ))
 
-    fig = px.line(df, x="episode", y="loss", title='loss over episodes')
+    fig = px.line(df, x="episode", y="loss", title='moving average: loss over ' + str(length) + ' episodes')
     fig.show()
 
 
