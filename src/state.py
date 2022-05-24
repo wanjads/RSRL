@@ -7,12 +7,15 @@ import constants
 class State:
 
     # a state consists of the age of information at the sender and at the receiver
-    # and two estimates for the probabilities that a new package arrives resp. that sending is successful
-    def __init__(self, aoi_sender, aoi_receiver, new_pack_prob_estimate, send_prob_estimate):
+    # + the information, if a new package arrived in the last episode (this is implicit in aoi_sender and not added
+    # separately)
+    # + the information, if the sender tried to send a package in the last episode
+    # + the information, if a package was sent successfully in the last episode (this is implicit in aoi_receiver and
+    # also not added separately)
+    def __init__(self, aoi_sender, aoi_receiver, last_action):
         self.aoi_sender = aoi_sender
         self.aoi_receiver = aoi_receiver
-        self.new_pack_prob_estimate = new_pack_prob_estimate
-        self.send_prob_estimate = send_prob_estimate
+        self.last_action = last_action
 
     # a state update dependent on the decision to send
     def update(self, action):
@@ -21,7 +24,9 @@ class State:
         self.aoi_receiver += 1
         if random.random() < constants.new_package_prob:
             self.aoi_sender = 0
+        self.last_action = 0
         if action:
+            self.last_action = 1
             cost += constants.energy_weight * 1
             if random.random() < constants.send_prob:
                 self.aoi_receiver = self.aoi_sender + 1
@@ -32,4 +37,4 @@ class State:
     # the initial state
     @staticmethod
     def initial_state():
-        return State(0, 0, 0.5, 0.5)
+        return State(0, 0, 0)
