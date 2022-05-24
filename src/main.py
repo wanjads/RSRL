@@ -17,13 +17,13 @@ def stop(n):
     return False
 
 
-def plot_loss(losses):
+def plot_moving_avg(data, title):
 
     # calculate moving average
     averages = []
     length = constants.moving_average_length
-    for i in range(len(losses) - length + 1):
-        average = sum(losses[i:i + length]) / length
+    for i in range(len(data) - length + 1):
+        average = sum(data[i:i + length]) / length
         averages.append(average)
 
     df = pd.DataFrame(dict(
@@ -31,34 +31,45 @@ def plot_loss(losses):
         loss=averages
     ))
 
-    fig = px.line(df, x="episode", y="loss", title='moving average: loss over ' + str(length) + ' episodes')
+    fig = px.line(df, x="episode", y="loss", title='moving average: ' + title + ' over ' + str(length) + ' episodes')
     fig.show()
 
 
 def main():
 
     losses = []
+    costs = []
+    risk_weighted_costs = []
+
     episode_no = 0
     state = State.initial_state()
     strategy = Strategy()
-    epsilon = 0.5
-    decay = 0.999
 
+    epsilon = constants.epsilon_0
     while not stop(episode_no):
 
         action = strategy.action(state, epsilon)
         state, cost = state.update(action)
 
+        costs += [cost]
+        if constants.risk:
+            cost = constants.risk_function(cost)
+            risk_weighted_costs += [cost]
+        else:
+            risk_weighted_costs += [constants.risk_function(cost)]
+
         episode_no += 1
-        epsilon = decay * epsilon
+        epsilon = constants.decay * epsilon
 
         loss = strategy.update(state, action, cost, episode_no)
         losses += [loss]
 
-        if episode_no % 20 == 0:
+        if episode_no % 100 == 0:
             print(str(episode_no/constants.max_episodes * 100) + " %")
 
-    plot_loss(losses)
+    plot_moving_avg(losses, 'loss')
+    plot_moving_avg(costs, 'cost')
+    plot_moving_avg(risk_weighted_costs, 'risk weighted cost')
 
 
 if __name__ == '__main__':

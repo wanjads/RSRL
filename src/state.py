@@ -33,9 +33,6 @@ class State:
 
         cost += self.aoi_receiver
 
-        if constants.risk:
-            cost = constants.risk_function(cost)
-
         return self, cost
 
     # the initial state
