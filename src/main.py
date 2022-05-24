@@ -36,19 +36,27 @@ def plot_loss(losses):
 
 
 def main():
+
     losses = []
-    cumulative_cost = 0
     episode_no = 0
     state = State.initial_state()
     strategy = Strategy()
+    epsilon = 0.5
+    decay = 0.999
+
     while not stop(episode_no):
-        action = strategy.action(state)
+
+        action = strategy.action(state, epsilon)
         state, cost = state.update(action)
-        cumulative_cost += cost
+
         episode_no += 1
+        epsilon = decay * epsilon
+
         loss = strategy.update(state, action, cost, episode_no)
         losses += [loss]
-        # print(cumulative_cost/episode_no)
+
+        if episode_no / 100 == 0:
+            print(str(episode_no/constants.max_episodes * 100) + " %")
 
     plot_loss(losses)
 

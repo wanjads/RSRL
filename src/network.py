@@ -1,6 +1,7 @@
 from keras.models import Input, Model
 from keras.layers import Dense
 from tensorflow.keras.optimizers import Adam
+import constants
 
 
 class NN:
@@ -20,7 +21,8 @@ class NN:
         # print("inp: " + str(inp))
         opt = self.model.predict(inp)
         # print("before: " + str(opt))
-        opt[0][action] = cost
+        target = cost + constants.gamma * opt[0][action]
+        opt[0][action] = target
         # print("opt: " + str(opt))
         history = self.model.fit(inp, opt, epochs=1, verbose=0)
         loss = history.history['loss'][0]

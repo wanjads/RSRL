@@ -50,8 +50,10 @@ class Strategy:
                          self.new_package_prob_estimate,
                          self.sending_prob_estimate]).reshape((1, 5))
 
-    def action(self, state):
+    def action(self, state, epsilon):
         self.inp = self.state_to_input(state)
-        predicted_costs = self.nn.out(self.inp)[0]
-        action = random.randint(0, 1)
+        if random.random() < epsilon:
+            action = random.randint(0, 1)
+        else:
+            action = np.argmin(self.nn.out(self.inp)[0])
         return action
