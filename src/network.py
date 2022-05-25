@@ -17,7 +17,7 @@ class NN:
     def out(self, inp):
         return self.model.predict(inp)
 
-    def train(self, inp, action, cost):
+    def train_model(self, inp, action, cost):
         # print("inp: " + str(inp))
         opt = self.model.predict(inp)
         # print("before: " + str(opt))

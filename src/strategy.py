@@ -7,7 +7,8 @@ import numpy as np
 
 class Strategy:
 
-    def __init__(self):
+    def __init__(self, risk):
+        self.risk_sensitivity = risk
         self.input_size = 5
         self.new_package_prob_estimate = 0.5
         self.sending_prob_estimate = 0.5
@@ -19,7 +20,7 @@ class Strategy:
     def update(self, state, action, cost, episode_no):
 
         # train nn
-        loss = self.nn.train(self.inp, action, cost)
+        loss = self.nn.train_model(self.inp, action, cost)
 
         # did a new package arrive at the sender?
         new_package_sender = (state.aoi_sender == 0)
