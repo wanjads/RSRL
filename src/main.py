@@ -70,9 +70,19 @@ def test(strategy):
     risk_weighted_costs = []
 
     state = State.initial_state()
+    pkg_was_not_sent_immediately = False
+    changed_decisions = 0
     for episode_no in range(constants.test_episodes):
 
         action = strategy.action(state, 0)
+
+        if state.aoi_sender > 0 and pkg_was_not_sent_immediately and action == 1:
+            changed_decisions += 1
+        elif state.aoi_sender == 0 and action == 0:
+            pkg_was_not_sent_immediately = True
+        elif state.aoi_sender == 0:
+            pkg_was_not_sent_immediately = False
+
         state, cost = state.update(action)
 
         costs += [cost]
@@ -83,6 +93,7 @@ def test(strategy):
 
     print("avg cost: " + str(sum(costs) / len(costs)))
     print("avg risk weighted cost: " + str(sum(risk_weighted_costs) / len(risk_weighted_costs)))
+    print("changed decisions: " + str(changed_decisions))
 
     plot_moving_avg(costs, 'cost', constants.test_episodes, strategy.risk_sensitivity)
     plot_moving_avg(risk_weighted_costs, 'risk weighted cost', constants.test_episodes, strategy.risk_sensitivity)
