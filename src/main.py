@@ -22,10 +22,10 @@ def plot_moving_avg(data, title, episodes, risk_sensitivity):
 
     fig = px.line(df, x='episode', y=title, title='moving average: ' + title + ' over ' + str(length) + ' episodes.'
                                                   + ' risk sensitivity: ' + str(risk_sensitivity)
-                                                  + '\t' + 'alpha: ' + constants.alpha
-                                                  + ', npp: ' + constants.new_package_prob
-                                                  + ', sp: ' + constants.send_prob
-                                                  + ', ew: ' + constants.energy_weight)
+                                                  + '\t \t' + 'alpha: ' + str(constants.alpha)
+                                                  + ', p: ' + str(constants.new_package_prob)
+                                                  + ', lambda: ' + str(constants.send_prob)
+                                                  + ', energy weight: ' + str(constants.energy_weight))
     fig.show()
 
 
