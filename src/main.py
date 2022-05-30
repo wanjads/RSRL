@@ -75,7 +75,6 @@ def test(strategy):
     for episode_no in range(constants.test_episodes):
 
         action = strategy.action(state, 0)
-        print("git test")
 
         if state.aoi_sender > 0 and pkg_was_not_sent_immediately and action == 1:
             changed_decisions += 1
