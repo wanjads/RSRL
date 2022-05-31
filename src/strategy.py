@@ -1,7 +1,5 @@
 import random
-
-from state import State
-from network import NN
+import constants
 import numpy as np
 
 
@@ -9,52 +7,27 @@ class Strategy:
 
     def __init__(self, risk):
         self.risk_sensitivity = risk
-        self.input_size = 5
-        self.new_package_prob_estimate = 0.5
-        self.sending_prob_estimate = 0.5
-        self.no_of_tries_to_send = 0
-        # here, we initialize the NN
-        self.nn = NN(self.input_size)
-        self.inp = []
+        self.qvalues = np.zeros((constants.aoi_cap + 1, constants.aoi_cap + 1, 2, 2))
 
-    def update(self, state, action, cost, episode_no):
+    def update(self, old_state, state, action, cost, learning_rate):
 
-        # train nn
-        loss = self.nn.train_model(self.inp, action, cost)
-
-        # did a new package arrive at the sender?
-        new_package_sender = (state.aoi_sender == 0)
-
-        # update new package prob estimate
-        if new_package_sender:
-            new_packages_arrived = (episode_no - 1) * self.new_package_prob_estimate + 1
-        else:
-            new_packages_arrived = (episode_no - 1) * self.new_package_prob_estimate
-        self.new_package_prob_estimate = new_packages_arrived / episode_no
-
-        # was a package successfully sent?
-        new_package_receiver = (state.aoi_receiver == state.aoi_sender + 1)
-        if action:
-            if new_package_receiver:
-                successful_sends = self.no_of_tries_to_send * self.sending_prob_estimate + 1
-            else:
-                successful_sends = self.no_of_tries_to_send * self.sending_prob_estimate
-            self.no_of_tries_to_send += 1
-            self.sending_prob_estimate = successful_sends / self.no_of_tries_to_send
-
-        return loss
-
-    def state_to_input(self, state):
-        return np.array([state.aoi_sender,
-                         state.aoi_receiver,
-                         state.last_action,
-                         self.new_package_prob_estimate,
-                         self.sending_prob_estimate]).reshape((1, 5))
+        V = np.max(self.qvalues[state.aoi_sender][state.aoi_receiver][state.last_action])
+        self.qvalues[old_state.aoi_sender][old_state.aoi_receiver][old_state.last_action][action] = \
+            (1 - learning_rate) * \
+            self.qvalues[old_state.aoi_sender][old_state.aoi_receiver][old_state.last_action][action] \
+            + learning_rate * \
+            (cost + constants.gamma * V)
 
     def action(self, state, epsilon):
-        self.inp = self.state_to_input(state)
         if random.random() < epsilon:
             action = random.randint(0, 1)
         else:
-            action = np.argmin(self.nn.out(self.inp)[0])
+            action = np.argmin(self.qvalues[state.aoi_sender][state.aoi_receiver][state.last_action])
         return action
+
+    def send_always(self):
+        for aois in range(constants.aoi_cap):
+            for aoir in range(constants.aoi_cap):
+                for la in range(2):
+                    self.qvalues[aois][aoir][la][0] = 0
+                    self.qvalues[aois][aoir][la][0] = 1

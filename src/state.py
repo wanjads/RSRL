@@ -20,15 +20,17 @@ class State:
     # a state update dependent on the decision to send
     def update(self, action):
         cost = 0
-        self.aoi_sender += 1
-        self.aoi_receiver += 1
+        if self.aoi_sender < constants.aoi_cap:
+            self.aoi_sender += 1
+        if self.aoi_receiver < constants.aoi_cap:
+            self.aoi_receiver += 1
         if random.random() < constants.new_package_prob:
             self.aoi_sender = 0
         self.last_action = 0
         if action:
             self.last_action = 1
             cost += constants.energy_weight * 1
-            if random.random() < constants.send_prob:
+            if random.random() < constants.send_prob and self.aoi_sender < constants.aoi_cap:
                 self.aoi_receiver = self.aoi_sender + 1
 
         cost += self.aoi_receiver
