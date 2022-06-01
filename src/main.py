@@ -8,6 +8,7 @@ import copy
 import random
 
 
+# plot a moving average of data over episodes
 def plot_moving_avg(data, title, episodes, risk_sensitivity):
     # calculate moving average
     averages = []
@@ -27,6 +28,7 @@ def plot_moving_avg(data, title, episodes, risk_sensitivity):
     fig.show()
 
 
+# train a strategy using (risk-sens.) eps-greedy q-learning
 def train(risk):
     print("----------    TRAIN MODEL    ----------")
     print("risk sensitivity: " + str(risk))
@@ -55,6 +57,7 @@ def train(risk):
     return strategy
 
 
+# test a strategy calculating avg costs and risk
 def test(strategy):
     print("----------   TEST STRATEGY   ----------")
     print("risk sensitivity: " + str(strategy.risk_sensitivity))
@@ -97,14 +100,18 @@ def test(strategy):
 
 def main():
 
+    # set a random seed for reproducibility
     random.seed(10)
 
+    # train a risk neutral strategy and a risk averse strategy
     risk_neutral_strategy = train(False)
     risk_sensitive_strategy = train(True)
 
+    # init a benchmark strategy sending in every episode
     constant_strategy = Strategy(False)
     constant_strategy.send_always()
 
+    # test all three strategies
     test(constant_strategy)
     test(risk_neutral_strategy)
     test(risk_sensitive_strategy)

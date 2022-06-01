@@ -26,6 +26,7 @@ def utility_function(cost): return np.exp(alpha * cost)
 def risk_measure(costs):
 
     # Stone's risk measure using k = 2, Y_0 = 1 and A = 1
+    # see pedersen and satchell 1998
 
     risk = 0
     for c in costs:

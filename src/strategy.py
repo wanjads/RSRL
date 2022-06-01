@@ -10,6 +10,7 @@ class Strategy:
         self.constant = False
         self.qvalues = np.zeros((constants.aoi_cap + 1, constants.aoi_cap + 1, 2, 2))
 
+    # the tabular q-learning update dependent on risk sensitivity
     def update(self, old_state, state, action, learning_rate):
 
         self.constant = False
