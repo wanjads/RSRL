@@ -48,6 +48,7 @@ def train(risk):
         if episode_no % int(0.2 * constants.train_episodes) == 0:
             print(str(int(episode_no / constants.train_episodes * 100)) + " %")
 
+    print("100 %")
     print("---------- TRAINING COMPLETE ----------")
     print()
 
@@ -89,6 +90,7 @@ def test(strategy):
     #                 print("state (" + str(aois) + "," + str(aoir) + ", " + str(la) + "): "
     #                       + str(strategy.qvalues[aois][aoir][la]))
 
+    print("100 %")
     print("----------   TEST COMPLETE   ----------")
     print()
 
