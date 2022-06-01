@@ -5,6 +5,7 @@ import constants
 import plotly.express as px
 import pandas as pd
 import copy
+import random
 
 
 def plot_moving_avg(data, title, episodes, risk_sensitivity):
@@ -38,19 +39,17 @@ def train(risk):
 
         old_state = copy.deepcopy(state)
         action = strategy.action(state, epsilon)
-        state, cost = state.update(action)
-
-        if strategy.risk_sensitivity:
-            cost = constants.risk_function(cost)
+        state = state.update(action)
 
         epsilon = constants.decay * epsilon
 
-        strategy.update(old_state, state, action, cost, constants.learning_rate(episode_no))
+        strategy.update(old_state, state, action, constants.learning_rate(episode_no))
 
-        if episode_no % int(0.1 * constants.train_episodes) == 0:
+        if episode_no % int(0.2 * constants.train_episodes) == 0:
             print(str(int(episode_no / constants.train_episodes * 100)) + " %")
 
     print("---------- TRAINING COMPLETE ----------")
+    print()
 
     return strategy
 
@@ -58,42 +57,46 @@ def train(risk):
 def test(strategy):
     print("----------   TEST STRATEGY   ----------")
     print("risk sensitivity: " + str(strategy.risk_sensitivity))
+    print("constant strategy: " + str(strategy.constant))
 
     costs = []
-    risk_weighted_costs = []
 
     state = State.initial_state()
     for episode_no in range(constants.test_episodes):
 
         action = strategy.action(state, 0)
 
-        state, cost = state.update(action)
+        state = state.update(action)
 
+        cost = constants.energy_weight * action + state.aoi_receiver
         costs += [cost]
-        risk_weighted_costs += [constants.risk_function(cost)]
 
-        if episode_no % int(0.1 * constants.test_episodes) == 0:
+        if episode_no % int(0.2 * constants.test_episodes) == 0:
             print(str(int(episode_no / constants.test_episodes * 100)) + " %")
 
+    risk = constants.risk_measure(costs)
     print("avg cost: " + str(sum(costs) / len(costs)))
-    print("avg risk weighted cost: " + str(sum(risk_weighted_costs) / len(risk_weighted_costs)))
+    print("risk: " + str(risk))
 
     # plot_moving_avg(costs, 'cost', constants.test_episodes, strategy.risk_sensitivity)
     # plot_moving_avg(risk_weighted_costs, 'risk weighted cost', constants.test_episodes, strategy.risk_sensitivity)
 
-    print("---   Q-VALUES   ---")
-    for aois in range(constants.aoi_cap):
-        for aoir in range(aois + 1, constants.aoi_cap):
-            for la in range(2):
-                if not (la == 0 and aois == 0 and aoir == 1):
-                    print("state (" + str(aois) + "," + str(aoir) + ", " + str(la) + "): "
-                          + str(strategy.qvalues[aois][aoir][la]))
+    # print("---   Q-VALUES   ---")
+    # for aois in range(constants.aoi_cap):
+    #     for aoir in range(aois + 1, constants.aoi_cap):
+    #         for la in range(2):
+    #             if not (la == 0 and aois == 0 and aoir == 1):
+    #                 print("state (" + str(aois) + "," + str(aoir) + ", " + str(la) + "): "
+    #                       + str(strategy.qvalues[aois][aoir][la]))
 
-    print()
     print("----------   TEST COMPLETE   ----------")
+    print()
 
 
 def main():
+
+    random.seed(10)
+
     risk_neutral_strategy = train(False)
     risk_sensitive_strategy = train(True)
 

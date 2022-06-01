@@ -7,11 +7,7 @@ import constants
 class State:
 
     # a state consists of the age of information at the sender and at the receiver
-    # + the information, if a new package arrived in the last episode (this is implicit in aoi_sender and not added
-    # separately)
     # + the information, if the sender tried to send a package in the last episode
-    # + the information, if a package was sent successfully in the last episode (this is implicit in aoi_receiver and
-    # also not added separately)
     def __init__(self, aoi_sender, aoi_receiver, last_action):
         self.aoi_sender = aoi_sender
         self.aoi_receiver = aoi_receiver
@@ -19,7 +15,6 @@ class State:
 
     # a state update dependent on the decision to send
     def update(self, action):
-        cost = 0
         if self.aoi_sender < constants.aoi_cap:
             self.aoi_sender += 1
         if self.aoi_receiver < constants.aoi_cap:
@@ -29,13 +24,10 @@ class State:
         self.last_action = 0
         if action:
             self.last_action = 1
-            cost += constants.energy_weight * 1
             if random.random() < constants.send_prob and self.aoi_sender < constants.aoi_cap:
                 self.aoi_receiver = self.aoi_sender + 1
 
-        cost += self.aoi_receiver
-
-        return self, cost
+        return self
 
     # the initial state
     @staticmethod
