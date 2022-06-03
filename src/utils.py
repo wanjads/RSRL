@@ -93,4 +93,3 @@ def plot_moving_avg(data, title, episodes, strategy_type):
                                                   + ', lambda: ' + str(constants.send_prob)
                                                   + ', energy weight: ' + str(constants.energy_weight))
     fig.show()
-
