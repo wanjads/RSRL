@@ -1,4 +1,3 @@
-# imports
 from state import State
 from strategy import Strategy
 import constants
