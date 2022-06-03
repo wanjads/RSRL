@@ -1,7 +1,4 @@
-import math
-import numpy as np
-
-train_episodes = 1000000
+train_episodes = 100000
 test_episodes = 10000
 new_package_prob = 0.5
 send_prob = 0.5
@@ -15,22 +12,23 @@ decay = 1                                                                       
 aoi_cap = 10
 
 
-def learning_rate(episode): return 10000000 / (10000000 + episode)                  # leaning factor for tab. q learn
-
-
+# utility function
 acceptance_lvl = 1                                                                  # see shen et al. 2014 p. 5
-alpha = 0.05                                                                        # risk factor
-def utility_function(cost): return np.exp(alpha * cost)
+alpha_utility = 0.05                                                                # risk factor
 
 
-def risk_measure(costs):
+# CVaR
+mu = 1                                                                              # risk weight in CVaR
+alpha_cvar = 0.05                                                                   # risk factor
 
-    # Stone's risk measure using k = 2, Y_0 = 1 and A = 1
-    # see pedersen and satchell 1998
 
-    risk = 0
-    for c in costs:
-        if c > 1:
-            risk += 1/len(costs) * (c - 1)**2
+# mean variance
+mv_risk_factor = 1
 
-    return math.sqrt(risk)
+
+# stone
+stone_risk_factor = 1
+
+
+# semi std deviation
+ssd_risk_factor = 1

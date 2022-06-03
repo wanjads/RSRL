@@ -2,39 +2,18 @@
 from state import State
 from strategy import Strategy
 import constants
-import plotly.express as px
-import pandas as pd
 import copy
 import random
-
-
-# plot a moving average of data over episodes
-def plot_moving_avg(data, title, episodes, risk_sensitivity):
-    # calculate moving average
-    averages = []
-    length = constants.moving_average_length
-    for i in range(len(data) - length + 1):
-        average = sum(data[i:i + length]) / length
-        averages.append(average)
-
-    df = pd.DataFrame({'episode': range(episodes - length + 1), title: averages})
-
-    fig = px.line(df, x='episode', y=title, title='moving average: ' + title + ' over ' + str(length) + ' episodes.'
-                                                  + ' risk sensitivity: ' + str(risk_sensitivity)
-                                                  + '\t \t' + 'alpha: ' + str(constants.alpha)
-                                                  + ', p: ' + str(constants.new_package_prob)
-                                                  + ', lambda: ' + str(constants.send_prob)
-                                                  + ', energy weight: ' + str(constants.energy_weight))
-    fig.show()
+import utils
 
 
 # train a strategy using (risk-sens.) eps-greedy q-learning
-def train(risk):
+def train(strategy_type):
     print("----------    TRAIN MODEL    ----------")
-    print("risk sensitivity: " + str(risk))
+    print("strategy type: " + strategy_type)
 
     state = State.initial_state()
-    strategy = Strategy(risk)
+    strategy = Strategy(strategy_type)
 
     epsilon = constants.epsilon_0
     for episode_no in range(constants.train_episodes):
@@ -45,7 +24,7 @@ def train(risk):
 
         epsilon = constants.decay * epsilon
 
-        strategy.update(old_state, state, action, constants.learning_rate(episode_no))
+        strategy.update(old_state, state, action, utils.learning_rate(episode_no), episode_no)
 
         if episode_no % int(0.2 * constants.train_episodes) == 0:
             print(str(int(episode_no / constants.train_episodes * 100)) + " %")
@@ -60,8 +39,7 @@ def train(risk):
 # test a strategy calculating avg costs and risk
 def test(strategy):
     print("----------   TEST STRATEGY   ----------")
-    print("risk sensitivity: " + str(strategy.risk_sensitivity))
-    print("constant strategy: " + str(strategy.constant))
+    print("strategy type: " + str(strategy.strategy_type))
 
     costs = []
 
@@ -78,20 +56,11 @@ def test(strategy):
         if episode_no % int(0.2 * constants.test_episodes) == 0:
             print(str(int(episode_no / constants.test_episodes * 100)) + " %")
 
-    risk = constants.risk_measure(costs)
+    absolute_risk = utils.risk_measure_absolute(costs)
+    relative_risk = utils.risk_measure_expectation(costs)
     print("avg cost: " + str(sum(costs) / len(costs)))
-    print("risk: " + str(risk))
-
-    # plot_moving_avg(costs, 'cost', constants.test_episodes, strategy.risk_sensitivity)
-    # plot_moving_avg(risk_weighted_costs, 'risk weighted cost', constants.test_episodes, strategy.risk_sensitivity)
-
-    # print("---   Q-VALUES   ---")
-    # for aois in range(constants.aoi_cap):
-    #     for aoir in range(aois + 1, constants.aoi_cap):
-    #         for la in range(2):
-    #             if not (la == 0 and aois == 0 and aoir == 1):
-    #                 print("state (" + str(aois) + "," + str(aoir) + ", " + str(la) + "): "
-    #                       + str(strategy.qvalues[aois][aoir][la]))
+    print("absolute risk: " + str(absolute_risk))
+    print("relative risk: " + str(relative_risk))
 
     print("100 %")
     print("----------   TEST COMPLETE   ----------")
@@ -103,18 +72,27 @@ def main():
     # set a random seed for reproducibility
     random.seed(10)
 
-    # train a risk neutral strategy and a risk averse strategy
-    risk_neutral_strategy = train(False)
-    risk_sensitive_strategy = train(True)
+    # init two benchmark strategy sending never / in every episode
+    always_strategy = Strategy("always")
+    never_strategy = Strategy("never")
 
-    # init a benchmark strategy sending in every episode
-    constant_strategy = Strategy(False)
-    constant_strategy.send_always()
+    # train a risk neutral strategy and risk averse strategies in different variants
+    risk_neutral_strategy = train("risk_neutral")
+    variance_strategy = train("mean_variance")
+    semi_std_dev_strategy = train("semi_std_deviation")
+    stone_strategy = train("stone_measure")
+    cvar_strategy = train("cvar")
+    utility_strategy = train("utility_function")
 
-    # test all three strategies
-    test(constant_strategy)
+    # test all strategies
+    test(always_strategy)
+    test(never_strategy)
     test(risk_neutral_strategy)
-    test(risk_sensitive_strategy)
+    test(variance_strategy)
+    test(semi_std_dev_strategy)
+    test(stone_strategy)
+    test(cvar_strategy)
+    test(utility_strategy)
 
 
 if __name__ == '__main__':

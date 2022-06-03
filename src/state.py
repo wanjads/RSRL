@@ -1,4 +1,3 @@
-# imports
 import random
 import constants
 
