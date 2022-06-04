@@ -25,6 +25,8 @@ class Strategy:
             self.always_send()
         elif strategy_type == "never":
             self.never_send()
+        elif strategy_type == "benchmark":
+            self.send_if_new_package()
 
     # the tabular q-learning update dependent on risk sensitivity
     def update(self, old_state, state, action, learning_rate, episode_no):
@@ -82,15 +84,15 @@ class Strategy:
         return action
 
     def always_send(self):
-        for aois in range(constants.aoi_cap):
-            for aoir in range(constants.aoi_cap):
+        for aois in range(constants.aoi_cap + 1):
+            for aoir in range(constants.aoi_cap + 1):
                 for la in range(2):
-                    self.qvalues[aois][aoir][la][0] = 0
-                    self.qvalues[aois][aoir][la][0] = 1
+                    self.qvalues[aois][aoir][la][1] = -1
 
     def never_send(self):
-        for aois in range(constants.aoi_cap):
-            for aoir in range(constants.aoi_cap):
-                for la in range(2):
-                    self.qvalues[aois][aoir][la][0] = 1
-                    self.qvalues[aois][aoir][la][0] = 0
+        pass  # this happens automatically
+
+    def send_if_new_package(self):
+        for aoir in range(constants.aoi_cap + 1):
+            for la in range(2):
+                self.qvalues[0][aoir][la][1] = -1

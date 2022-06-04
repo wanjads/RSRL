@@ -36,7 +36,7 @@ def train(strategy_type):
 
 
 # test a strategy calculating avg costs and risk
-def test(strategy):
+def test(strategy, data):
     print("----------   TEST STRATEGY   ----------")
     print("strategy type: " + str(strategy.strategy_type))
 
@@ -55,15 +55,21 @@ def test(strategy):
         if episode_no % int(0.2 * constants.test_episodes) == 0:
             print(str(int(episode_no / constants.test_episodes * 100)) + " %")
 
+    avg_cost = sum(costs) / len(costs)
     absolute_risk = utils.risk_measure_absolute(costs)
     relative_risk = utils.risk_measure_expectation(costs)
-    print("avg cost: " + str(sum(costs) / len(costs)))
+    print("avg cost: " + str(avg_cost))
     print("absolute risk: " + str(absolute_risk))
     print("relative risk: " + str(relative_risk))
 
     print("100 %")
     print("----------   TEST COMPLETE   ----------")
     print()
+
+    data['strategy'] += [strategy.strategy_type]
+    data['avg_cost'] += [avg_cost]
+    data['absolute_risk'] += [absolute_risk]
+    data['relative_risk'] += [relative_risk]
 
 
 def main():
@@ -75,6 +81,9 @@ def main():
     always_strategy = Strategy("always")
     never_strategy = Strategy("never")
 
+    # init a benchmark sending, if a new package arrived
+    benchmark_strategy = Strategy("benchmark")
+
     # train a risk neutral strategy and risk averse strategies in different variants
     risk_neutral_strategy = train("risk_neutral")
     variance_strategy = train("mean_variance")
@@ -84,14 +93,22 @@ def main():
     utility_strategy = train("utility_function")
 
     # test all strategies
-    test(always_strategy)
-    test(never_strategy)
-    test(risk_neutral_strategy)
-    test(variance_strategy)
-    test(semi_std_dev_strategy)
-    test(stone_strategy)
-    test(cvar_strategy)
-    test(utility_strategy)
+    # data collects all costs and risks
+    data = {'strategy': [], 'avg_cost': [], 'absolute_risk': [], 'relative_risk': []}
+    test(always_strategy, data)
+    test(never_strategy, data)
+    test(benchmark_strategy, data)
+    test(risk_neutral_strategy, data)
+    test(variance_strategy, data)
+    test(semi_std_dev_strategy, data)
+    test(stone_strategy, data)
+    test(cvar_strategy, data)
+    test(utility_strategy, data)
+
+    # plot bar charts
+    utils.bar_chart(data, 'avg_cost')
+    utils.bar_chart(data, 'absolute_risk')
+    utils.bar_chart(data, 'relative_risk')
 
 
 if __name__ == '__main__':

@@ -7,17 +7,17 @@ import pandas as pd
 
 # learning rate
 def learning_rate(episode):
-    return 10000000 / (10000000 + episode)                          # leaning factor for tab. q learn
+    return 10000000 / (10000000 + episode)  # leaning factor for tab. q learn
 
 
 # utility function
 def utility_function(cost):
-    return np.exp(constants.alpha_utility * cost)                   # utility function see shen et al.
+    return np.exp(constants.alpha_utility * cost)  # utility function see shen et al.
 
 
 # CVaR risk
 def cvar_risk(sorted_costs):
-    index = int((1-constants.alpha_cvar)*len(sorted_costs))
+    index = int((1 - constants.alpha_cvar) * len(sorted_costs))
     highest_costs = sorted_costs[index:]
     cvar = sum(highest_costs) / len(highest_costs)
     return cvar
@@ -30,29 +30,26 @@ def running_mean(episode_no, m, new_cost):
 
 # compute running variance
 def running_var(n, old_m, m, var, new_cost):
-
     # see wikipedia:
     # https://de.wikipedia.org/wiki/Stichprobenvarianz_(Sch%C3%A4tzfunktion)#Berechnung_f%C3%BCr_auflaufende_Messwerte
-    old_s = (n-2) / (n-1) * var
-    new_var = n / (n-1) * ((n-1) / n * (old_s + old_m**2) + new_cost**2 / n - m**2)
+    old_s = (n - 2) / (n - 1) * var
+    new_var = n / (n - 1) * ((n - 1) / n * (old_s + old_m ** 2) + new_cost ** 2 / n - m ** 2)
     return new_var
 
 
 def risk_measure_absolute(costs):
-
     # Stone's risk measure using k = 2, Y_0 = 1 and A = 1
     # see pedersen and satchell 1998
 
     risk = 0
     for c in costs:
         if c > 1:
-            risk += 1/len(costs) * (c - 1)**2
+            risk += 1 / len(costs) * (c - 1) ** 2
 
     return math.sqrt(risk)
 
 
 def risk_measure_expectation(costs):
-
     # semi standard deviation
     # see pedersen and satchell 1998
 
@@ -92,4 +89,19 @@ def plot_moving_avg(data, title, episodes, strategy_type):
                                                   + ', p: ' + str(constants.new_package_prob)
                                                   + ', lambda: ' + str(constants.send_prob)
                                                   + ', energy weight: ' + str(constants.energy_weight))
+    fig.show()
+
+
+def bar_chart(data, title):
+
+    # sort dict by title entry
+    data = dict(zip(data['strategy'], data[title]))
+    data = dict(sorted(data.items(), key=lambda x: x[1], reverse=True))
+    data = {'strategy': list(data), title: data.values()}
+
+    df = pd.DataFrame(data)
+    fig = px.bar(df, x='strategy', y=title, title=title + '\t \t \t \t' + 'p: ' + str(constants.new_package_prob)
+                                                                        + ', lambda: ' + str(constants.send_prob)
+                                                                        + ', energy weight: '
+                                                                        + str(constants.energy_weight))
     fig.show()
