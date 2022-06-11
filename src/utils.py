@@ -7,12 +7,15 @@ import pandas as pd
 
 # learning rate
 def learning_rate(episode):
-    return 10000000 / (10000000 + episode)  # leaning factor for tab. q learn
+    return 10000000 / (1000000000 + episode)  # leaning factor for tab. q learn around 0.01
 
 
 # utility function
 def utility_function(cost):
-    return np.exp(constants.alpha_utility * cost)  # utility function see shen et al.
+    cap = 500
+    arg = max(constants.alpha_utility * cost, -cap)
+    arg = min(arg, cap)
+    return np.exp(arg)  # utility function see shen et al.
 
 
 # CVaR risk
@@ -37,7 +40,7 @@ def running_var(n, old_m, m, var, new_cost):
     return new_var
 
 
-def risk_measure_absolute(costs):
+def stone_measure(costs):
     # Stone's risk measure using k = 2, Y_0 = 1 and A = 1
     # see pedersen and satchell 1998
 
@@ -49,7 +52,19 @@ def risk_measure_absolute(costs):
     return math.sqrt(risk)
 
 
-def risk_measure_expectation(costs):
+def fishburn_measure(costs, target):
+    # Fishburn's alpha-t measure with alpha = 2 and variable target
+    # see pedersen and satchell 1998
+
+    risk = 0
+    for c in costs:
+        if c > target:
+            risk += 1 / len(costs) * (c - target) ** 2
+
+    return math.sqrt(risk)
+
+
+def semi_std_dev(costs):
     # semi standard deviation
     # see pedersen and satchell 1998
 
@@ -95,13 +110,20 @@ def plot_moving_avg(data, title, episodes, strategy_type):
 def bar_chart(data, title):
 
     # sort dict by title entry
-    data = dict(zip(data['strategy'], data[title]))
-    data = dict(sorted(data.items(), key=lambda x: x[1], reverse=True))
-    data = {'strategy': list(data), title: data.values()}
+    # sort colors accordingly
+    colors = px.colors.qualitative.Plotly
+    data = dict(zip(data['strategy'], zip(data[title], colors)))
+    data = dict(sorted(data.items(), key=lambda x: x[1][0], reverse=True))
+    colors = list(zip(*data.values()))[1]
+    data = {'strategy': list(data), title: list(zip(*data.values()))[0]}
 
     df = pd.DataFrame(data)
-    fig = px.bar(df, x='strategy', y=title, title=title + '\t \t \t \t' + 'p: ' + str(constants.new_package_prob)
-                                                                        + ', lambda: ' + str(constants.send_prob)
-                                                                        + ', energy weight: '
-                                                                        + str(constants.energy_weight))
+    fig = px.bar(df, x='strategy', y=title, color='strategy', color_discrete_sequence=colors,
+                 title=title + '\t \t \t \t'
+                             + 'p: ' + str(constants.new_package_prob)
+                             + ', lambda: ' + str(constants.send_prob)
+                             + ', energy weight: ' + str(constants.energy_weight)
+                             + '\t \t \t \t'
+                             + 'train eps: ' + str(constants.train_episodes)
+                             + ', test eps: ' + str(constants.test_episodes))
     fig.show()

@@ -55,21 +55,19 @@ def test(strategy, data):
         if episode_no % int(0.2 * constants.test_episodes) == 0:
             print(str(int(episode_no / constants.test_episodes * 100)) + " %")
 
-    avg_cost = sum(costs) / len(costs)
-    absolute_risk = utils.risk_measure_absolute(costs)
-    relative_risk = utils.risk_measure_expectation(costs)
-    print("avg cost: " + str(avg_cost))
-    print("absolute risk: " + str(absolute_risk))
-    print("relative risk: " + str(relative_risk))
-
     print("100 %")
+
+    avg_cost = sum(costs) / len(costs)
+    risk = utils.semi_std_dev(costs)
+    print("avg cost: " + str(avg_cost))
+    print("risk: " + str(risk))
+
     print("----------   TEST COMPLETE   ----------")
     print()
 
     data['strategy'] += [strategy.strategy_type]
     data['avg_cost'] += [avg_cost]
-    data['absolute_risk'] += [absolute_risk]
-    data['relative_risk'] += [relative_risk]
+    data['risk'] += [risk]
 
 
 def main():
@@ -94,7 +92,7 @@ def main():
 
     # test all strategies
     # data collects all costs and risks
-    data = {'strategy': [], 'avg_cost': [], 'absolute_risk': [], 'relative_risk': []}
+    data = {'strategy': [], 'avg_cost': [], 'absolute_risk': [], 'risk': []}
     test(always_strategy, data)
     test(never_strategy, data)
     test(benchmark_strategy, data)
@@ -107,8 +105,7 @@ def main():
 
     # plot bar charts
     utils.bar_chart(data, 'avg_cost')
-    utils.bar_chart(data, 'absolute_risk')
-    utils.bar_chart(data, 'relative_risk')
+    utils.bar_chart(data, 'risk')
 
 
 if __name__ == '__main__':

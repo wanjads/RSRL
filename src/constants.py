@@ -1,10 +1,10 @@
 train_episodes = 100000
-test_episodes = 10000
-new_package_prob = 0.1
+test_episodes = 100000
+new_package_prob = 0.5
 send_prob = 0.2
 energy_weight = 3
 moving_average_length = 50                                                          # for plots
-gamma = 0.9                                                                         # discount factor for the MDP
+gamma = 0.7                                                                         # discount factor for the MDP
 
 epsilon_0 = 1                                                                       # for eps-greedy policy
 decay = 1                                                                           # decay factor for epsilon
@@ -18,17 +18,17 @@ alpha_utility = 0.05                                                            
 
 
 # CVaR
-mu = 1                                                                              # risk weight in CVaR
-alpha_cvar = 0.05                                                                   # risk factor
+mu = 50                                                                             # risk weight in CVaR
+alpha_cvar = 0.1                                                                    # risk factor
 
 
 # mean variance
-mv_risk_factor = 1
+mv_risk_factor = 0.5
 
 
 # stone
-stone_risk_factor = 1
+stone_risk_factor = 0.1
 
 
 # semi std deviation
-ssd_risk_factor = 1
+ssd_risk_factor = 0.1

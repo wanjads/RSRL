@@ -19,7 +19,6 @@ class Strategy:
 
         # mean_variance needs a running avg of all costs, running variance of all costs
         self.mean = 0
-        self.var = 0
 
         if strategy_type == "always":
             self.always_send()
@@ -27,12 +26,13 @@ class Strategy:
             self.never_send()
         elif strategy_type == "benchmark":
             self.send_if_new_package()
+        elif strategy_type == "stone_measure":
+            self.target = constants.energy_weight + 1
 
     # the tabular q-learning update dependent on risk sensitivity
     def update(self, old_state, state, action, learning_rate, episode_no):
 
         cost = constants.energy_weight * action + state.aoi_receiver
-        # in zhou they only  use the cost from aoi but in this context using the general cost makes more sense
         bisect.insort(self.sorted_costs, cost)
         V = np.min(self.qvalues[state.aoi_sender][state.aoi_receiver][state.last_action])
         old_q_value = self.qvalues[old_state.aoi_sender][old_state.aoi_receiver][old_state.last_action][action]
@@ -42,30 +42,30 @@ class Strategy:
                 old_q_value + learning_rate * \
                 (utils.utility_function(cost + constants.gamma * V - old_q_value) - constants.acceptance_lvl)
 
+        # zhou et al. only use the cost from aoi but in this context using the general cost makes more sense
         elif self.strategy_type == "cvar":  # see zhou et al.
             risk = utils.cvar_risk(self.sorted_costs)
-            cvar_cost = state.aoi_receiver + constants.mu * risk + constants.energy_weight * action
+            cvar_cost = cost + constants.mu * risk
             self.qvalues[old_state.aoi_sender][old_state.aoi_receiver][old_state.last_action][action] = \
                 (1 - learning_rate) * old_q_value + learning_rate * (cvar_cost + constants.gamma * V)
 
-        elif self.strategy_type == "mean_variance":  # variance as risk indicator
-            old_mean = self.mean
-            old_var = self.var
+        elif self.strategy_type == "mean_variance":  # own idea
             self.mean = utils.running_mean(episode_no, self.mean, cost)
-            if episode_no > 0:
-                self.var = utils.running_var(episode_no + 1, old_mean, self.mean, self.var, cost)
-            mv_cost = cost + constants.mv_risk_factor * (self.var - old_var)
+            mv_cost = cost + constants.mv_risk_factor * abs(cost - self.mean)
             self.qvalues[old_state.aoi_sender][old_state.aoi_receiver][old_state.last_action][action] = \
                 (1 - learning_rate) * old_q_value + learning_rate * (mv_cost + constants.gamma * V)
 
-        elif self.strategy_type == "stone_measure":
-            stone_cost = cost + constants.stone_risk_factor*(cost - 1)**2
+        elif self.strategy_type == "stone_measure":  # own idea
+            stone_cost = cost + constants.stone_risk_factor*(cost - self.target)**2
             self.qvalues[old_state.aoi_sender][old_state.aoi_receiver][old_state.last_action][action] = \
                 (1 - learning_rate) * old_q_value + learning_rate * (stone_cost + constants.gamma * V)
 
-        elif self.strategy_type == "semi_std_deviation":
+        elif self.strategy_type == "semi_std_deviation":  # own idea
             self.mean = utils.running_mean(episode_no, self.mean, cost)
-            sd_cost = cost + constants.ssd_risk_factor * (cost - self.mean)**2
+            if cost < self.mean:
+                sd_cost = cost
+            else:
+                sd_cost = cost + constants.ssd_risk_factor * (cost - self.mean)**2
             self.qvalues[old_state.aoi_sender][old_state.aoi_receiver][old_state.last_action][action] = \
                 (1 - learning_rate) * old_q_value + learning_rate * (sd_cost + constants.gamma * V)
 
