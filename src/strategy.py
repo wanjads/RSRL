@@ -7,9 +7,10 @@ import bisect
 
 class Strategy:
 
-    def __init__(self, strategy_type):
+    def __init__(self, strategy_type, risk_factor):
         # the strategy type determines how the agent will act, especially how it treats risk
         self.strategy_type = strategy_type
+        self.risk_factor = risk_factor
 
         # tabular saved q values
         self.qvalues = np.zeros((constants.aoi_cap + 1, constants.aoi_cap + 1, 2, 2))
@@ -38,25 +39,26 @@ class Strategy:
         old_q_value = self.qvalues[old_state.aoi_sender][old_state.aoi_receiver][old_state.last_action][action]
 
         if self.strategy_type == "utility_function":  # see shen et al. p.9 eq (13)
+            # acceptance_lvl = 1, see shen et al. 2014 p. 5
             self.qvalues[old_state.aoi_sender][old_state.aoi_receiver][old_state.last_action][action] = \
                 old_q_value + learning_rate * \
-                (utils.utility_function(cost + constants.gamma * V - old_q_value) - constants.acceptance_lvl)
+                (utils.utility_function(cost + constants.gamma * V - old_q_value, self.risk_factor) - 1)
 
         # zhou et al. only use the cost from aoi but in this context using the general cost makes more sense
         elif self.strategy_type == "cvar":  # see zhou et al.
-            risk = utils.cvar_risk(self.sorted_costs)
-            cvar_cost = cost + constants.mu * risk
+            risk = utils.cvar_risk(self.sorted_costs, self.risk_factor)
+            cvar_cost = cost + 1 * risk  # mu seems to be irrelevant
             self.qvalues[old_state.aoi_sender][old_state.aoi_receiver][old_state.last_action][action] = \
                 (1 - learning_rate) * old_q_value + learning_rate * (cvar_cost + constants.gamma * V)
 
         elif self.strategy_type == "mean_variance":  # own idea
             self.mean = utils.running_mean(episode_no, self.mean, cost)
-            mv_cost = cost + constants.mv_risk_factor * abs(cost - self.mean)
+            mv_cost = cost + self.risk_factor * abs(cost - self.mean)
             self.qvalues[old_state.aoi_sender][old_state.aoi_receiver][old_state.last_action][action] = \
                 (1 - learning_rate) * old_q_value + learning_rate * (mv_cost + constants.gamma * V)
 
         elif self.strategy_type == "stone_measure":  # own idea
-            stone_cost = cost + constants.stone_risk_factor*(cost - self.target)**2
+            stone_cost = cost + self.risk_factor*(cost - self.target)**2
             self.qvalues[old_state.aoi_sender][old_state.aoi_receiver][old_state.last_action][action] = \
                 (1 - learning_rate) * old_q_value + learning_rate * (stone_cost + constants.gamma * V)
 
@@ -65,7 +67,7 @@ class Strategy:
             if cost < self.mean:
                 sd_cost = cost
             else:
-                sd_cost = cost + constants.ssd_risk_factor * (cost - self.mean)**2
+                sd_cost = cost + self.risk_factor * (cost - self.mean)**2
             self.qvalues[old_state.aoi_sender][old_state.aoi_receiver][old_state.last_action][action] = \
                 (1 - learning_rate) * old_q_value + learning_rate * (sd_cost + constants.gamma * V)
 

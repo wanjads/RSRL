@@ -7,12 +7,12 @@ import utils
 
 
 # train a strategy using (risk-sens.) eps-greedy q-learning
-def train(strategy_type):
+def train(strategy_type, risk_factor):
     print("----------    TRAIN MODEL    ----------")
     print("strategy type: " + strategy_type)
 
     state = State.initial_state()
-    strategy = Strategy(strategy_type)
+    strategy = Strategy(strategy_type, risk_factor)
 
     epsilon = constants.epsilon_0
     for episode_no in range(constants.train_episodes):
@@ -70,29 +70,40 @@ def test(strategy, data):
     data['risk'] += [risk]
 
 
+def risk_factor_train_test(strategy, step):
+    strategies = []
+    for risk in range(10):
+        strategies += [train(strategy, step * risk)]
+    data = {'strategy': [], 'avg_cost': [], 'risk': []}
+    for strategy in strategies:
+        test(strategy, data)
+    utils.risk_factor_cost_bar_chart(data, step, strategy.strategy_type)
+    utils.risk_factor_risk_bar_chart(data, step, strategy.strategy_type)
+
+
 def main():
 
     # set a random seed for reproducibility
     random.seed(10)
 
     # init two benchmark strategy sending never / in every episode
-    always_strategy = Strategy("always")
-    never_strategy = Strategy("never")
+    always_strategy = Strategy("always", 0)
+    never_strategy = Strategy("never", 0)
 
     # init a benchmark sending, if a new package arrived
-    benchmark_strategy = Strategy("benchmark")
+    benchmark_strategy = Strategy("benchmark", 0)
 
     # train a risk neutral strategy and risk averse strategies in different variants
-    risk_neutral_strategy = train("risk_neutral")
-    variance_strategy = train("mean_variance")
-    semi_std_dev_strategy = train("semi_std_deviation")
-    stone_strategy = train("stone_measure")
-    cvar_strategy = train("cvar")
-    utility_strategy = train("utility_function")
+    risk_neutral_strategy = train("risk_neutral", 0)
+    variance_strategy = train("mean_variance", 0.3)
+    semi_std_dev_strategy = train("semi_std_deviation", 0.1)
+    stone_strategy = train("stone_measure", 0.1)
+    cvar_strategy = train("cvar", 0.05)
+    utility_strategy = train("utility_function", 0.05)
 
     # test all strategies
     # data collects all costs and risks
-    data = {'strategy': [], 'avg_cost': [], 'absolute_risk': [], 'risk': []}
+    data = {'strategy': [], 'avg_cost': [], 'risk': []}
     test(always_strategy, data)
     test(never_strategy, data)
     test(benchmark_strategy, data)
@@ -103,9 +114,15 @@ def main():
     test(cvar_strategy, data)
     test(utility_strategy, data)
 
+    # risk_factor_train_test('mean_variance', 0.1)
+    # risk_factor_train_test('semi_std_deviation', 0.025)
+    # risk_factor_train_test('stone_measure', 0.025)
+    # risk_factor_train_test('cvar', 0.05)
+    # risk_factor_train_test('utility_function', 0.001)
+
     # plot bar charts
-    utils.bar_chart(data, 'avg_cost')
-    utils.bar_chart(data, 'risk')
+    utils.bar_chart(data, 'avg_cost', True)
+    utils.bar_chart(data, 'risk', False)
 
 
 if __name__ == '__main__':

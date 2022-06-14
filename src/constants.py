@@ -11,24 +11,3 @@ decay = 1                                                                       
 
 aoi_cap = 10
 
-
-# utility function
-acceptance_lvl = 1                                                                  # see shen et al. 2014 p. 5
-alpha_utility = 0.05                                                                # risk factor
-
-
-# CVaR
-mu = 50                                                                             # risk weight in CVaR
-alpha_cvar = 0.1                                                                    # risk factor
-
-
-# mean variance
-mv_risk_factor = 0.5
-
-
-# stone
-stone_risk_factor = 0.1
-
-
-# semi std deviation
-ssd_risk_factor = 0.1

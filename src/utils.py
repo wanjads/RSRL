@@ -11,18 +11,21 @@ def learning_rate(episode):
 
 
 # utility function
-def utility_function(cost):
+def utility_function(cost, risk_factor):
     cap = 500
-    arg = max(constants.alpha_utility * cost, -cap)
+    arg = max(risk_factor * cost, -cap)
     arg = min(arg, cap)
     return np.exp(arg)  # utility function see shen et al.
 
 
 # CVaR risk
-def cvar_risk(sorted_costs):
-    index = int((1 - constants.alpha_cvar) * len(sorted_costs))
+def cvar_risk(sorted_costs, risk_factor):
+    index = int((1 - risk_factor) * len(sorted_costs))
     highest_costs = sorted_costs[index:]
-    cvar = sum(highest_costs) / len(highest_costs)
+    if len(highest_costs) > 0:
+        cvar = sum(highest_costs) / len(highest_costs)
+    else:
+        cvar = 0
     return cvar
 
 
@@ -107,13 +110,13 @@ def plot_moving_avg(data, title, episodes, strategy_type):
     fig.show()
 
 
-def bar_chart(data, title):
+def bar_chart(data, title, rev):
 
     # sort dict by title entry
     # sort colors accordingly
     colors = px.colors.qualitative.Plotly
     data = dict(zip(data['strategy'], zip(data[title], colors)))
-    data = dict(sorted(data.items(), key=lambda x: x[1][0], reverse=True))
+    data = dict(sorted(data.items(), key=lambda x: x[1][0], reverse=rev))
     colors = list(zip(*data.values()))[1]
     data = {'strategy': list(data), title: list(zip(*data.values()))[0]}
 
@@ -126,4 +129,19 @@ def bar_chart(data, title):
                              + '\t \t \t \t'
                              + 'train eps: ' + str(constants.train_episodes)
                              + ', test eps: ' + str(constants.test_episodes))
+    fig.show()
+
+
+def risk_factor_cost_bar_chart(data, step, title):
+
+    data = {'risk_factor': np.arange(0, 10 * step, step), 'cost': data['avg_cost']}
+    df = pd.DataFrame(data)
+    fig = px.bar(df, x='risk_factor', y='cost', title=title)
+    fig.show()
+
+
+def risk_factor_risk_bar_chart(data, step, title):
+    data = {'risk_factor': np.arange(0, 10 * step, step), 'risk': data['risk']}
+    df = pd.DataFrame(data)
+    fig = px.bar(df, x='risk_factor', y='risk', title=title)
     fig.show()
