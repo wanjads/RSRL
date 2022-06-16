@@ -4,6 +4,11 @@ import constants
 import copy
 import random
 import utils
+import os
+
+
+# suppress tensorflow warnings
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
 
 # train a strategy using (risk-sens.) eps-greedy q-learning

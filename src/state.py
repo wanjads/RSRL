@@ -1,4 +1,7 @@
 import random
+
+import numpy as np
+
 import constants
 
 
@@ -27,6 +30,11 @@ class State:
                 self.aoi_receiver = self.aoi_sender + 1
 
         return self
+
+    def as_input(self):
+        return np.array([self.aoi_sender,
+                         self.aoi_receiver,
+                         self.last_action]).reshape((1, 3))
 
     # the initial state
     @staticmethod
