@@ -32,30 +32,24 @@ class Strategy:
         bisect.insort(self.sorted_costs, cost)
         inp = old_state.as_input()
 
-        if self.strategy_type == "utility_function":  # see shen et al. p.9 eq (13)
+        if self.strategy_type == "utility_function":  # see shen et al. p.9 eq (13) for tabular version
             utility = utils.utility_function(cost, self.risk_factor)
             self.nn.train_model(inp, action, utility)
 
         # zhou et al. only use the cost from aoi but in this context using the general cost makes more sense
         elif self.strategy_type == "cvar":  # see zhou et al.
-            pass
-            # risk = utils.cvar_risk(self.sorted_costs, self.risk_factor)
-            # cvar_cost = cost + 1 * risk  # mu seems to be irrelevant
-            # self.qvalues[old_state.aoi_sender][old_state.aoi_receiver][old_state.last_action][action] = \
-            #     (1 - learning_rate) * old_q_value + learning_rate * (cvar_cost + constants.gamma * V)
+            risk = utils.cvar_risk(self.sorted_costs, self.risk_factor)
+            cvar_cost = cost + 1 * risk  # mu seems to be irrelevant
+            self.nn.train_model(inp, action, cvar_cost)
 
         elif self.strategy_type == "mean_variance":  # own idea
-            pass
-            # self.mean = utils.running_mean(episode_no, self.mean, cost)
-            # mv_cost = cost + self.risk_factor * abs(cost - self.mean)
-            # self.qvalues[old_state.aoi_sender][old_state.aoi_receiver][old_state.last_action][action] = \
-            #     (1 - learning_rate) * old_q_value + learning_rate * (mv_cost + constants.gamma * V)
+            self.mean = utils.running_mean(episode_no, self.mean, cost)
+            mv_cost = cost + self.risk_factor * abs(cost - self.mean)
+            self.nn.train_model(inp, action, mv_cost)
 
         elif self.strategy_type == "stone_measure":  # own idea
-            pass
-            # stone_cost = cost + self.risk_factor*(cost - self.target)**2
-            # self.qvalues[old_state.aoi_sender][old_state.aoi_receiver][old_state.last_action][action] = \
-            #     (1 - learning_rate) * old_q_value + learning_rate * (stone_cost + constants.gamma * V)
+            stone_cost = cost + self.risk_factor*(cost - self.target)**2
+            self.nn.train_model(inp, action, stone_cost)
 
         elif self.strategy_type == "semi_std_deviation":  # own idea
             self.mean = utils.running_mean(episode_no, self.mean, cost)
@@ -67,6 +61,12 @@ class Strategy:
 
         elif self.strategy_type == "risk_neutral":  # standard q-learning
             self.nn.train_model(inp, action, cost)
+
+        elif self.strategy_type == "risk_states":  # own idea
+            risky_state_cost = cost
+            if state.aoi_receiver >= constants.risky_aoi:
+                risky_state_cost = self.risk_factor*cost
+            self.nn.train_model(inp, action, risky_state_cost)
 
         else:
             print("a strategy update for strategy type " + self.strategy_type + " is not implemented")

@@ -11,3 +11,5 @@ decay = 0.999                                                                   
 
 aoi_cap = 100
 
+risky_aoi = 10
+

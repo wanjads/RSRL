@@ -46,8 +46,9 @@ def test(strategy, data):
     print("strategy type: " + str(strategy.strategy_type))
 
     costs = []
-
+    risky_states = 0
     state = State.initial_state()
+
     for episode_no in range(constants.test_episodes):
 
         action = strategy.action(state, 0)
@@ -57,6 +58,9 @@ def test(strategy, data):
         cost = constants.energy_weight * action + state.aoi_receiver
         costs += [cost]
 
+        if state.aoi_receiver >= constants.risky_aoi:
+            risky_states += 1
+
         if episode_no % int(0.2 * constants.test_episodes) == 0:
             print(str(int(episode_no / constants.test_episodes * 100)) + " %")
 
@@ -64,8 +68,11 @@ def test(strategy, data):
 
     avg_cost = sum(costs) / len(costs)
     risk = utils.semi_std_dev(costs)
+    fishburn_risk = utils.fishburn_measure(costs, constants.energy_weight + 1)
     print("avg cost: " + str(avg_cost))
     print("risk: " + str(risk))
+    print("risky states: " + str(risky_states))
+    print("fishburn's measure: " + str(fishburn_risk))
 
     print("----------   TEST COMPLETE   ----------")
     print()
@@ -73,13 +80,14 @@ def test(strategy, data):
     data['strategy'] += [strategy.strategy_type]
     data['avg_cost'] += [avg_cost]
     data['risk'] += [risk]
+    data['risky_states'] += [risky_states]
+    data['fishburn'] += [fishburn_risk]
 
 
-def risk_factor_train_test(strategy, step):
+def risk_factor_train_test(strategy, step, data):
     strategies = []
     for risk in range(10):
         strategies += [train(strategy, step * risk)]
-    data = {'strategy': [], 'avg_cost': [], 'risk': []}
     for strategy in strategies:
         test(strategy, data)
     utils.risk_factor_cost_bar_chart(data, step, strategy.strategy_type)
@@ -100,28 +108,32 @@ def main():
 
     # train a risk neutral strategy and risk averse strategies in different variants
     risk_neutral_strategy = train("risk_neutral", 0)
-    # variance_strategy = train("mean_variance", 0.3)
+    variance_strategy = train("mean_variance", 0.3)
     semi_std_dev_strategy = train("semi_std_deviation", 0.1)
-    # stone_strategy = train("stone_measure", 0.1)
-    # cvar_strategy = train("cvar", 0.05)
-    # utility_strategy = train("utility_function", 0.05)
+    stone_strategy = train("stone_measure", 0.1)
+    cvar_strategy = train("cvar", 0.05)
+    utility_strategy = train("utility_function", 0.05)
+    risk_states_strategy = train("risk_states", 10)
 
     # test all strategies
     # data collects all costs and risks
-    data = {'strategy': [], 'avg_cost': [], 'risk': []}
+    data = {'strategy': [], 'avg_cost': [], 'risk': [], 'risky_states': [], 'fishburn': []}
     test(always_strategy, data)
     test(never_strategy, data)
     test(benchmark_strategy, data)
     test(risk_neutral_strategy, data)
-    # test(variance_strategy, data)
+    test(variance_strategy, data)
     test(semi_std_dev_strategy, data)
-    # test(stone_strategy, data)
-    # test(cvar_strategy, data)
-    # test(utility_strategy, data)
+    test(stone_strategy, data)
+    test(cvar_strategy, data)
+    test(utility_strategy, data)
+    test(risk_states_strategy, data)
 
     # plot bar charts
     utils.bar_chart(data, 'avg_cost', True)
     utils.bar_chart(data, 'risk', False)
+    utils.bar_chart(data, 'risky_states', False)
+    utils.bar_chart(data, 'fishburn', False)
 
 
 if __name__ == '__main__':
