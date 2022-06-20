@@ -72,14 +72,16 @@ class Strategy:
             print("a strategy update for strategy type " + self.strategy_type + " is not implemented")
 
     def action(self, state, epsilon):
-        if random.random() < epsilon:
-            action = random.randint(0, 1)
-        elif self.strategy_type == 'always':
+        if self.strategy_type == 'always':
             action = 1
         elif self.strategy_type == 'never':
             action = 0
         elif self.strategy_type == 'benchmark':
             action = int(state.aoi_sender == 0)
+        elif self.strategy_type == 'optimal':
+            action = int(state.aoi_receiver >= constants.energy_weight / constants.send_prob + state.aoi_sender + 1)
+        elif random.random() < epsilon:
+            action = random.randint(0, 1)
         else:
             action = np.argmin(self.nn.out(state.as_input())[0])
         return action
