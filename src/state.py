@@ -25,6 +25,9 @@ class State:
 
         if self.aoi_receiver < constants.aoi_cap:
             self.aoi_receiver += 1
+
+        # here begins a new iteration
+
         if self.aoi_sender < constants.aoi_cap:
             self.aoi_sender += 1
         if random.random() < constants.new_package_prob:

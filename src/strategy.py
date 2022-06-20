@@ -22,6 +22,7 @@ class Strategy:
         # mean_variance needs a running avg of all costs, running variance of all costs
         self.mean = 0
 
+        # these strategies need extra information
         if strategy_type == "stone_measure":
             self.target = constants.energy_weight + 1
 
@@ -78,10 +79,13 @@ class Strategy:
             action = 0
         elif self.strategy_type == 'benchmark':
             action = int(state.aoi_sender == 0)
-        elif self.strategy_type == 'optimal':
-            action = int(state.aoi_receiver >= constants.energy_weight / constants.send_prob + state.aoi_sender + 1)
+        elif self.strategy_type == 'benchmark2':
+            action = 0
+            if state.aoi_receiver - state.aoi_sender >= constants.energy_weight / constants.send_prob:
+                action = 1
         elif random.random() < epsilon:
             action = random.randint(0, 1)
         else:
             action = np.argmin(self.nn.out(state.as_input())[0])
+
         return action

@@ -105,16 +105,16 @@ def main():
 
     # init a benchmark sending, if a new package arrived
     benchmark_strategy = Strategy("benchmark", 0)
-    optimal_strategy = Strategy("optimal", 0)
+    # benchmark2_strategy = Strategy("benchmark2", 0)
 
     # train a risk neutral strategy and risk averse strategies in different variants
-    # risk_neutral_strategy = train("risk_neutral", 0)
+    risk_neutral_strategy = train("risk_neutral", 0)
     # variance_strategy = train("mean_variance", 0.3)
     # semi_std_dev_strategy = train("semi_std_deviation", 0.1)
     # stone_strategy = train("stone_measure", 0.1)
-    # cvar_strategy = train("cvar", 0.05)
+    cvar_strategy = train("cvar", 0.05)
     # utility_strategy = train("utility_function", 0.05)
-    # risk_states_strategy = train("risk_states", 10)
+    risk_states_strategy = train("risk_states", 10)
 
     # test all strategies
     # data collects all costs and risks
@@ -122,14 +122,14 @@ def main():
     # test(always_strategy, data)
     # test(never_strategy, data)
     test(benchmark_strategy, data)
-    test(optimal_strategy, data)
-    # test(risk_neutral_strategy, data)
+    # test(benchmark2_strategy, data)
+    test(risk_neutral_strategy, data)
     # test(variance_strategy, data)
     # test(semi_std_dev_strategy, data)
     # test(stone_strategy, data)
-    # test(cvar_strategy, data)
+    test(cvar_strategy, data)
     # test(utility_strategy, data)
-    # test(risk_states_strategy, data)
+    test(risk_states_strategy, data)
 
     # plot bar charts
     utils.bar_chart(data, 'avg_cost', True)
