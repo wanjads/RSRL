@@ -49,7 +49,7 @@ class Strategy:
             self.nn.train_model(inp, action, mv_cost)
 
         elif self.strategy_type == "stone_measure":  # own idea
-            stone_cost = cost + self.risk_factor*(cost - self.target)**2
+            stone_cost = cost + self.risk_factor * (cost - self.target) ** 2
             self.nn.train_model(inp, action, stone_cost)
 
         elif self.strategy_type == "semi_std_deviation":  # own idea
@@ -57,7 +57,7 @@ class Strategy:
             if cost < self.mean:
                 sd_cost = cost
             else:
-                sd_cost = cost + self.risk_factor * (cost - self.mean)**2
+                sd_cost = cost + self.risk_factor * (cost - self.mean) ** 2
             self.nn.train_model(inp, action, sd_cost)
 
         elif self.strategy_type == "risk_neutral":  # standard q-learning
@@ -66,7 +66,7 @@ class Strategy:
         elif self.strategy_type == "risk_states":  # own idea
             risky_state_cost = cost
             if state.aoi_receiver >= constants.risky_aoi:
-                risky_state_cost = self.risk_factor*cost
+                risky_state_cost = self.risk_factor * cost
             self.nn.train_model(inp, action, risky_state_cost)
 
         else:
@@ -81,7 +81,10 @@ class Strategy:
             action = int(state.aoi_sender == 0)
         elif self.strategy_type == 'benchmark2':
             action = 0
-            if state.aoi_receiver - state.aoi_sender >= constants.energy_weight / constants.send_prob:
+            if constants.send_prob * (state.aoi_receiver - state.aoi_sender - 1) \
+                    * (1 + max(0, constants.energy_weight - state.aoi_receiver)
+                       + constants.new_package_prob / (1 - constants.new_package_prob) ** 2) \
+                    >= constants.energy_weight:
                 action = 1
         elif random.random() < epsilon:
             action = random.randint(0, 1)

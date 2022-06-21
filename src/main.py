@@ -105,7 +105,7 @@ def main():
 
     # init a benchmark sending, if a new package arrived
     benchmark_strategy = Strategy("benchmark", 0)
-    # benchmark2_strategy = Strategy("benchmark2", 0)
+    benchmark2_strategy = Strategy("benchmark2", 0)
 
     # train a risk neutral strategy and risk averse strategies in different variants
     risk_neutral_strategy = train("risk_neutral", 0)
@@ -122,7 +122,7 @@ def main():
     # test(always_strategy, data)
     # test(never_strategy, data)
     test(benchmark_strategy, data)
-    # test(benchmark2_strategy, data)
+    test(benchmark2_strategy, data)
     test(risk_neutral_strategy, data)
     # test(variance_strategy, data)
     # test(semi_std_dev_strategy, data)
