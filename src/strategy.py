@@ -60,7 +60,7 @@ class Strategy:
                 sd_cost = cost + self.risk_factor * (cost - self.mean) ** 2
             self.nn.train_model(inp, action, sd_cost)
 
-        elif self.strategy_type == "risk_neutral":  # standard q-learning
+        elif self.strategy_type == "risk_neutral" or self.strategy_type == "stochastic":  # standard q-learning
             self.nn.train_model(inp, action, cost)
 
         elif self.strategy_type == "risk_states":  # own idea
@@ -88,6 +88,10 @@ class Strategy:
                 action = 1
         elif random.random() < epsilon:
             action = random.randint(0, 1)
+        elif self.strategy_type == 'stochastic':
+            action = 0
+            if random.random() < self.nn.out(state.as_input())[0][1]:
+                action = 1
         else:
             action = np.argmin(self.nn.out(state.as_input())[0])
 

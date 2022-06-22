@@ -9,7 +9,7 @@ class NN:
     def __init__(self, input_size):
         self.inputs = Input(shape=(input_size,))
         self.x = Dense(10, activation='relu')(self.inputs)
-        self.output = Dense(2, activation='linear')(self.x)
+        self.output = Dense(2, activation='softmax')(self.x)
         self.model = Model(self.inputs, self.output)
         opt = Adam(learning_rate=0.01)
         self.model.compile(optimizer=opt, loss='mean_squared_error')
