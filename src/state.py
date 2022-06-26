@@ -33,8 +33,6 @@ class State:
         if random.random() < constants.new_package_prob:
             self.aoi_sender = 0
 
-        return self
-
     def as_input(self):
         return np.array([self.aoi_sender,
                          self.aoi_receiver,
@@ -43,4 +41,4 @@ class State:
     # the initial state
     @staticmethod
     def initial_state():
-        return State(0, 0, 0)
+        return State(0, 1, 0)

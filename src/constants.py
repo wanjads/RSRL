@@ -1,5 +1,5 @@
-train_episodes = 100
-test_episodes = 1000
+train_episodes = 1000
+test_episodes = 10000
 new_package_prob = 0.5
 send_prob = 0.9
 energy_weight = 3
@@ -12,4 +12,7 @@ decay = 0.999                                                                   
 aoi_cap = 100
 
 risky_aoi = 10
+
+reinforce_test_simulation_no = 100
+reinforce_test_simulation_length = 5
 

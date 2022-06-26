@@ -24,7 +24,7 @@ def train(strategy_type, risk_factor):
 
         old_state = copy.deepcopy(state)
         action = strategy.action(state, epsilon)
-        state = state.update(action)
+        state.update(action)
 
         epsilon = constants.decay * epsilon
 
@@ -53,7 +53,7 @@ def test(strategy, data):
 
         action = strategy.action(state, 0)
 
-        state = state.update(action)
+        state.update(action)
 
         cost = constants.energy_weight * action + state.aoi_receiver
         costs += [cost]
@@ -109,13 +109,14 @@ def main():
 
     # train a risk neutral strategy and risk averse strategies in different variants
     risk_neutral_strategy = train("risk_neutral", 0)
-    stochastic_risk_neutral_strategy = train("stochastic", 0)
+    # stochastic_risk_neutral_strategy = train("stochastic", 0)
     # variance_strategy = train("mean_variance", 0.3)
     # semi_std_dev_strategy = train("semi_std_deviation", 0.1)
     # stone_strategy = train("stone_measure", 0.1)
     cvar_strategy = train("cvar", 0.05)
     # utility_strategy = train("utility_function", 0.05)
     risk_states_strategy = train("risk_states", 10)
+    basic_monte_carlo_strategy = train("basic_monte_carlo", 0)
 
     # test all strategies
     # data collects all costs and risks
@@ -125,13 +126,14 @@ def main():
     test(benchmark_strategy, data)
     test(benchmark2_strategy, data)
     test(risk_neutral_strategy, data)
-    test(stochastic_risk_neutral_strategy, data)
+    # test(stochastic_risk_neutral_strategy, data)
     # test(variance_strategy, data)
     # test(semi_std_dev_strategy, data)
     # test(stone_strategy, data)
     test(cvar_strategy, data)
     # test(utility_strategy, data)
     test(risk_states_strategy, data)
+    test(basic_monte_carlo_strategy, data)
 
     # plot bar charts
     utils.bar_chart(data, 'avg_cost', True)
