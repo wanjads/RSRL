@@ -14,8 +14,10 @@ class Strategy:
         self.strategy_type = strategy_type
         self.risk_factor = risk_factor
 
-        # tabular saved q values
-        self.nn = network.NN(3)
+        # the nn for the strategy
+        self.nn = network.NN(3, "mean_squared_error")
+
+        # TODO aufräumen --v
 
         # cvar needs a sorted list of all past costs
         self.sorted_costs = []
@@ -26,15 +28,20 @@ class Strategy:
         # these strategies need extra information
         if strategy_type == "stone_measure":
             self.target = constants.energy_weight + 1
-        if strategy_type == "basic_monte_carlo":
+        if strategy_type == "basic_monte_carlo" or strategy_type == "REINFORCE":
             self.lambda_estimate = 0.5
             self.p_estimate = 0.5
             self.no_of_sends = 0
             self.last_aoi_receiver = 1
             self.last_aoi_sender = 0
+        if strategy_type == "REINFORCE":
+            self.gradients = []
+            self.states = []
+            self.costs = []
+            self.probs = []
 
             # the tabular q-learning update dependent on risk sensitivity
-    def update(self, old_state, state, action, learning_rate, episode_no):
+    def update(self, old_state, state, action, learning_rate, episode_no, action_probs=None):
 
         cost = constants.energy_weight * action + state.aoi_receiver
         bisect.insort(self.sorted_costs, cost)
@@ -79,13 +86,16 @@ class Strategy:
         elif self.strategy_type == "basic_monte_carlo":  # own idea
             self.update_estimates(state, episode_no)
 
-        elif self.strategy_type == "REINFORCE":  # own idea
+        elif self.strategy_type == "REINFORCE":  # standard REINFORCE algorithm, see Sutton and Barto
             self.update_estimates(state, episode_no)
-
+            self.remember(state, action, action_probs, cost)
+            if episode_no % constants.reinforce_rollout_length == 0 and episode_no > 0:
+                self.update_policy(learning_rate)
         else:
             print("a strategy update for strategy type " + self.strategy_type + " is not implemented")
 
     def action(self, state, epsilon):
+        action_probs = []
         if self.strategy_type == 'always':
             action = 1
         elif self.strategy_type == 'never':
@@ -102,14 +112,17 @@ class Strategy:
         elif self.strategy_type == 'basic_monte_carlo':
             mean_wait = 0
             mean_send = 0
-            for _ in range(constants.reinforce_test_simulation_no):
-                mean_wait += self.simulate(constants.reinforce_test_simulation_length, state, "random", 0)
-                mean_send += self.simulate(constants.reinforce_test_simulation_length, state, "random", 1)
-            mean_wait /= constants.reinforce_test_simulation_no
-            mean_send /= constants.reinforce_test_simulation_no
+            for _ in range(constants.basic_monte_carlo_simulation_no):
+                mean_wait += self.simulate(constants.basic_monte_carlo_simulation_length, state, "random", 0)
+                mean_send += self.simulate(constants.basic_monte_carlo_simulation_length, state, "random", 1)
+            mean_wait /= constants.basic_monte_carlo_simulation_no
+            mean_send /= constants.basic_monte_carlo_simulation_no
             action = int(mean_send < mean_wait)
         elif self.strategy_type == "cvar":
             action = np.argmin(self.nn.out(state.as_input())[0])
+        elif self.strategy_type == "REINFORCE":
+            action_probs = self.nn.out(state.as_input())[0]
+            action = np.random.choice([0, 1], p=action_probs)
         elif random.random() < epsilon:
             action = random.randint(0, 1)
         elif self.strategy_type == 'stochastic':
@@ -119,7 +132,7 @@ class Strategy:
         else:
             action = np.argmin(self.nn.out(state.as_input())[0])
 
-        return action
+        return action, action_probs
 
     def simulate(self, length, state, simulation_type, action):
 
@@ -162,3 +175,37 @@ class Strategy:
             self.no_of_sends += 1
         self.last_aoi_receiver = state.aoi_receiver
         self.last_aoi_sender = state.aoi_sender
+
+    def remember(self, state, action, action_prob, cost):
+        self.gradients.append(self.one_hot_encode(action) - action_prob)
+        self.states.append(state.as_input())
+        self.costs.append(cost)
+        self.probs.append(action_prob)
+
+    @staticmethod
+    def one_hot_encode(action):
+        if action == 0:
+            return np.array([1, 0])
+        return np.array([0, 1])
+
+    # taken from
+    # https://medium.com/swlh/policy-gradient-reinforcement-learning-with-keras-57ca6ed32555
+    def update_policy(self, learning_rate):
+        """Updates the policy network using the NN model.
+        This function is used after the MC sampling is done - following
+        delta theta = alpha * gradient + log pi"""
+
+        # get X
+        states = np.vstack(self.states)
+
+        # get Y
+        gradients = np.vstack(self.gradients)
+        costs = np.vstack(self.costs)
+        gradients *= costs
+        gradients = learning_rate * np.vstack([gradients]) + self.probs
+
+        history = self.nn.model.train_on_batch(states, gradients)
+
+        self.states, self.probs, self.gradients, self.costs = [], [], [], []
+
+        return history
