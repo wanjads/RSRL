@@ -5,7 +5,7 @@ import copy
 import random
 import utils
 import os
-
+import network
 
 # suppress tensorflow warnings
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
@@ -98,6 +98,13 @@ def main():
 
     # set a random seed for reproducibility
     random.seed(10)
+
+    # TEST TEST TEST
+
+    rnn = network.ReinforceNN(3)
+    print(rnn.out([1, 1, 1]))
+
+    # TEST END TEST END TEST END
 
     # init two benchmark strategy sending never / in every episode
     # always_strategy = Strategy("always", 0)
