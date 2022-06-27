@@ -16,4 +16,5 @@ risky_aoi = 10
 basic_monte_carlo_simulation_no = 100
 basic_monte_carlo_simulation_length = 5
 
-reinforce_rollout_length = 100
+# TODO: optimize this hyperparameter
+reinforce_rollout_length = 5

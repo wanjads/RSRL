@@ -107,20 +107,20 @@ def main():
     # never_strategy = Strategy("never", 0)
 
     # init a benchmark sending, if a new package arrived
-    # benchmark_strategy = Strategy("benchmark", 0)
+    benchmark_strategy = Strategy("benchmark", 0)
     # init a more sophisticated benchmark
     benchmark2_strategy = Strategy("benchmark2", 0)
 
     # train a risk neutral strategy and risk averse strategies in different variants
-    # risk_neutral_strategy = train("risk_neutral", 0)
+    risk_neutral_strategy = train("risk_neutral", 0)
     # stochastic_risk_neutral_strategy = train("stochastic", 0)
     # variance_strategy = train("mean_variance", 0.3)
     # semi_std_dev_strategy = train("semi_std_deviation", 0.1)
     # stone_strategy = train("stone_measure", 0.1)
-    # cvar_strategy = train("cvar", 0.05)
+    cvar_strategy = train("cvar", 0.05)
     # utility_strategy = train("utility_function", 0.05)
-    # risk_states_strategy = train("risk_states", 10)
-    # basic_monte_carlo_strategy = train("basic_monte_carlo", 0)
+    risk_states_strategy = train("risk_states", 10)
+    basic_monte_carlo_strategy = train("basic_monte_carlo", 0)
     reinforce_strategy = train("REINFORCE", 0)
 
     # test all strategies
@@ -128,17 +128,17 @@ def main():
     data = {'strategy': [], 'avg_cost': [], 'risk': [], 'risky_states': [], 'fishburn': []}
     # test(always_strategy, data)
     # test(never_strategy, data)
-    # test(benchmark_strategy, data)
+    test(benchmark_strategy, data)
     test(benchmark2_strategy, data)
-    # test(risk_neutral_strategy, data)
+    test(risk_neutral_strategy, data)
     # test(stochastic_risk_neutral_strategy, data)
     # test(variance_strategy, data)
     # test(semi_std_dev_strategy, data)
     # test(stone_strategy, data)
-    # test(cvar_strategy, data)
+    test(cvar_strategy, data)
     # test(utility_strategy, data)
-    # test(risk_states_strategy, data)
-    # test(basic_monte_carlo_strategy, data)
+    test(risk_states_strategy, data)
+    test(basic_monte_carlo_strategy, data)
     test(reinforce_strategy, data)
 
     # plot bar charts
