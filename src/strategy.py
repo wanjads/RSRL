@@ -5,6 +5,7 @@ import numpy as np
 import utils
 import bisect
 import network
+from state import State
 
 
 class Strategy:
@@ -90,7 +91,15 @@ class Strategy:
             self.update_estimates(state, episode_no)
             self.remember(state, action, action_probs, cost)
             if episode_no % constants.reinforce_rollout_length == 0 and episode_no > 0:
-                self.update_policy(learning_rate)
+                self.update_reinforce(learning_rate)
+                # reset environment
+                state.aoi_sender = 0
+                state.aoi_receiver = 1
+                state.last_action = 0
+            if episode_no % 200 == 0:
+                # TEST
+                data = {'strategy': [], 'avg_cost': [], 'risk': [], 'risky_states': [], 'fishburn': []}
+                self.test(data)
         else:
             print("a strategy update for strategy type " + self.strategy_type + " is not implemented")
 
@@ -100,6 +109,8 @@ class Strategy:
             action = 1
         elif self.strategy_type == 'never':
             action = 0
+        elif self.strategy_type == 'random':
+            action = random.randint(0, 1)
         elif self.strategy_type == 'benchmark':
             action = int(state.aoi_sender == 0)
         elif self.strategy_type == 'benchmark2':
@@ -190,7 +201,7 @@ class Strategy:
 
     # taken from
     # https://medium.com/swlh/policy-gradient-reinforcement-learning-with-keras-57ca6ed32555
-    def update_policy(self, learning_rate):
+    def update_reinforce(self, learning_rate):
         """Updates the policy network using the NN model.
         This function is used after the MC sampling is done - following
         delta theta = alpha * gradient + log pi"""
@@ -200,8 +211,8 @@ class Strategy:
 
         # get Y
         gradients = np.vstack(self.gradients)
-        costs = np.vstack(self.costs)
-        gradients *= costs
+        rewards = self.get_rewards()
+        gradients *= rewards
         gradients = learning_rate * np.vstack([gradients]) + self.probs
 
         history = self.nn.model.train_on_batch(states, gradients)
@@ -209,3 +220,60 @@ class Strategy:
         self.states, self.probs, self.gradients, self.costs = [], [], [], []
 
         return history
+
+    # taken from
+    # https://medium.com/swlh/policy-gradient-reinforcement-learning-with-keras-57ca6ed32555
+    def get_rewards(self):
+
+        rewards = - np.array(self.costs)
+
+        mean_rewards = np.mean(rewards)
+        std_rewards = np.std(rewards)
+        rewards = (rewards - mean_rewards) / (std_rewards + 1e-7)  # avoiding zero div
+
+        rewards = np.vstack(rewards)
+
+        return rewards
+
+    # TODO delete after test
+    def test(self, data):
+        print("----------   TEST STRATEGY   ----------")
+        print("strategy type: " + str(self.strategy_type))
+
+        costs = []
+        risky_states = 0
+        state = State.initial_state()
+
+        for episode_no in range(constants.test_episodes):
+
+            action, _ = self.action(state, 0)
+
+            state.update(action)
+
+            cost = constants.energy_weight * action + state.aoi_receiver
+            costs += [cost]
+
+            if state.aoi_receiver >= constants.risky_aoi:
+                risky_states += 1
+
+            if episode_no % int(0.2 * constants.test_episodes) == 0:
+                print(str(int(episode_no / constants.test_episodes * 100)) + " %")
+
+        print("100 %")
+
+        avg_cost = sum(costs) / len(costs)
+        risk = utils.semi_std_dev(costs)
+        fishburn_risk = utils.fishburn_measure(costs, constants.energy_weight + 1)
+        print("avg cost: " + str(avg_cost))
+        print("risk: " + str(risk))
+        print("risky states: " + str(risky_states))
+        print("fishburn's measure: " + str(fishburn_risk))
+
+        print("----------   TEST COMPLETE   ----------")
+        print()
+
+        data['strategy'] += [self.strategy_type]
+        data['avg_cost'] += [avg_cost]
+        data['risk'] += [risk]
+        data['risky_states'] += [risky_states]
+        data['fishburn'] += [fishburn_risk]

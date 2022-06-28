@@ -17,4 +17,5 @@ basic_monte_carlo_simulation_no = 100
 basic_monte_carlo_simulation_length = 5
 
 # TODO: optimize this hyperparameter
-reinforce_rollout_length = 5
+# TODO: lernt der algorithmus überhaupt? cost nach rollouts
+reinforce_rollout_length = 100                                                         # batches = eps/rrl
