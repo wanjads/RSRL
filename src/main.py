@@ -1,3 +1,5 @@
+import numpy as np
+
 from state import State
 from strategy import Strategy
 import constants
@@ -23,20 +25,55 @@ def train(strategy_type, risk_factor):
     for episode_no in range(constants.train_episodes):
 
         old_state = copy.deepcopy(state)
-        action, action_probs = strategy.action(state, epsilon)
+        action = strategy.action(state, epsilon)
         state.update(action)
 
         epsilon = constants.decay * epsilon
 
-        if strategy_type == "REINFORCE":
-            strategy.update(old_state, state, action, 1, episode_no, action_probs)
-        else:
-            strategy.update(old_state, state, action, utils.learning_rate(episode_no), episode_no)
+        strategy.update(old_state, state, action, utils.learning_rate(episode_no), episode_no)
 
         if episode_no % int(0.2 * constants.train_episodes) == 0:
             print(str(int(episode_no / constants.train_episodes * 100)) + " %")
 
     print("100 %")
+    print("---------- TRAINING COMPLETE ----------")
+    print()
+
+    return strategy
+
+
+def train_reinforce(strategy_type, risk_factor):
+
+    # REINFORCE ASSUMES KNOWLEDGE OF THE RELEVANT PROBABILITIES
+
+    print("----------    TRAIN MODEL    ----------")
+    print("strategy type: " + strategy_type)
+
+    state = State.initial_state()
+    strategy = Strategy(strategy_type, risk_factor)
+
+    for trajectory_no in range(constants.no_train_trajectories):
+
+        costs = np.zeros(constants.reinforce_rollout_length)
+        actions = np.zeros(constants.reinforce_rollout_length)
+        states = np.zeros((constants.reinforce_rollout_length, 3))
+
+        for episode_no in range(constants.reinforce_rollout_length):
+
+            states[episode_no] = [state.aoi_sender, state.aoi_receiver, state.last_action]
+            action = strategy.action(state, 0)
+            actions[episode_no] = action
+            state.update(action)
+
+            costs[episode_no] = state.aoi_receiver + constants.energy_weight * action
+
+        strategy.update_reinforce(states, actions, costs, 0.00001)
+
+        if trajectory_no % int(0.2 * constants.no_train_trajectories) == 0:
+            print(str(int(trajectory_no / constants.no_train_trajectories * 100)) + " %")
+
+    print("100 %")
+    print("parameter: " + str(strategy.action_prob))
     print("---------- TRAINING COMPLETE ----------")
     print()
 
@@ -54,7 +91,7 @@ def test(strategy, data):
 
     for episode_no in range(constants.test_episodes):
 
-        action, _ = strategy.action(state, 0)
+        action = strategy.action(state, 0)
 
         state.update(action)
 
@@ -123,17 +160,17 @@ def main():
     # cvar_strategy = train("cvar", 0.05)
     # utility_strategy = train("utility_function", 0.05)
     # risk_states_strategy = train("risk_states", 10)
-    # basic_monte_carlo_strategy = train("basic_monte_carlo", 0)
-    reinforce_strategy = train("REINFORCE", 0)
+    basic_monte_carlo_strategy = train("basic_monte_carlo", 0)
+    reinforce_strategy = train_reinforce("REINFORCE", 0)
 
     # test all strategies
     # data collects all costs and risks
     data = {'strategy': [], 'avg_cost': [], 'risk': [], 'risky_states': [], 'fishburn': []}
     # test(always_strategy, data)
     # test(never_strategy, data)
-    # test(random_strategy, data)
+    test(random_strategy, data)
     # test(benchmark_strategy, data)
-    # test(benchmark2_strategy, data)
+    test(benchmark2_strategy, data)
     # test(risk_neutral_strategy, data)
     # test(stochastic_risk_neutral_strategy, data)
     # test(variance_strategy, data)
@@ -142,7 +179,7 @@ def main():
     # test(cvar_strategy, data)
     # test(utility_strategy, data)
     # test(risk_states_strategy, data)
-    # test(basic_monte_carlo_strategy, data)
+    test(basic_monte_carlo_strategy, data)
     test(reinforce_strategy, data)
 
     # plot bar charts

@@ -18,34 +18,26 @@ class Strategy:
         # the nn for the strategy
         self.nn = network.NN(3, "mean_squared_error")
 
-        # TODO aufräumen --v
-
-        # cvar needs a sorted list of all past costs
-        self.sorted_costs = []
-
-        # mean_variance needs a running avg of all costs, running variance of all costs
-        self.mean = 0
-
         # these strategies need extra information
+        if strategy_type == "mean_variance" or strategy_type == "semi_std_deviation":
+            self.mean = 0
+        if strategy_type == "cvar":
+            self.sorted_costs = []
         if strategy_type == "stone_measure":
             self.target = constants.energy_weight + 1
-        if strategy_type == "basic_monte_carlo" or strategy_type == "REINFORCE":
+        if strategy_type == "basic_monte_carlo":
             self.lambda_estimate = 0.5
             self.p_estimate = 0.5
             self.no_of_sends = 0
             self.last_aoi_receiver = 1
             self.last_aoi_sender = 0
         if strategy_type == "REINFORCE":
-            self.gradients = []
-            self.states = []
-            self.costs = []
-            self.probs = []
+            self.action_prob = 0.5
 
             # the tabular q-learning update dependent on risk sensitivity
-    def update(self, old_state, state, action, learning_rate, episode_no, action_probs=None):
+    def update(self, old_state, state, action, learning_rate, episode_no):
 
         cost = constants.energy_weight * action + state.aoi_receiver
-        bisect.insort(self.sorted_costs, cost)
         inp = old_state.as_input()
 
         if self.strategy_type == "utility_function":  # see shen et al. p.9 eq (13) for tabular version
@@ -54,6 +46,7 @@ class Strategy:
 
         # zhou et al. only use the cost from aoi but in this context using the general cost makes more sense
         elif self.strategy_type == "cvar":  # see zhou et al.
+            bisect.insort(self.sorted_costs, cost)
             risk = utils.cvar_risk(self.sorted_costs, self.risk_factor)
             cvar_cost = cost + 1 * risk  # mu seems to be irrelevant
             self.nn.train_model(inp, action, cvar_cost)
@@ -87,24 +80,21 @@ class Strategy:
         elif self.strategy_type == "basic_monte_carlo":  # own idea
             self.update_estimates(state, episode_no)
 
-        elif self.strategy_type == "REINFORCE":  # standard REINFORCE algorithm, see Sutton and Barto
-            self.update_estimates(state, episode_no)
-            self.remember(state, action, action_probs, cost)
-            if episode_no % constants.reinforce_rollout_length == 0 and episode_no > 0:
-                self.update_reinforce(learning_rate)
-                # reset environment
-                state.aoi_sender = 0
-                state.aoi_receiver = 1
-                state.last_action = 0
-            if episode_no % 200 == 0:
-                # TEST
-                data = {'strategy': [], 'avg_cost': [], 'risk': [], 'risky_states': [], 'fishburn': []}
-                self.test(data)
         else:
             print("a strategy update for strategy type " + self.strategy_type + " is not implemented")
 
+    def update_reinforce(self, states, actions, costs, learning_rate):
+
+        returns = self.returns_from_costs(costs)
+
+        derivatives = self.derivatives_from_state_actions(states, actions)
+
+        for episode_no in range(len(states)):
+            self.action_prob = \
+                max(0, min(1, self.action_prob + learning_rate * derivatives[episode_no] * returns[episode_no]))
+            print(self.action_prob)
+
     def action(self, state, epsilon):
-        action_probs = []
         if self.strategy_type == 'always':
             action = 1
         elif self.strategy_type == 'never':
@@ -124,15 +114,17 @@ class Strategy:
             mean_wait = 0
             mean_send = 0
             for _ in range(constants.basic_monte_carlo_simulation_no):
-                mean_wait += self.simulate(constants.basic_monte_carlo_simulation_length, state, "random", 0)
-                mean_send += self.simulate(constants.basic_monte_carlo_simulation_length, state, "random", 1)
+                data = self.simulate(constants.basic_monte_carlo_simulation_length, state, "random", 0)
+                mean_wait += self.cost_mean_from_simulation_data(data)
+                data = self.simulate(constants.basic_monte_carlo_simulation_length, state, "random", 1)
+                mean_send += self.cost_mean_from_simulation_data(data)
             mean_wait /= constants.basic_monte_carlo_simulation_no
             mean_send /= constants.basic_monte_carlo_simulation_no
             action = int(mean_send < mean_wait)
         elif self.strategy_type == "cvar":
             action = np.argmin(self.nn.out(state.as_input())[0])
         elif self.strategy_type == "REINFORCE":
-            action_probs = self.nn.out(state.as_input())[0]
+            action_probs = [(1 - self.action_prob), self.action_prob]
             action = np.random.choice([0, 1], p=action_probs)
         elif random.random() < epsilon:
             action = random.randint(0, 1)
@@ -143,21 +135,59 @@ class Strategy:
         else:
             action = np.argmin(self.nn.out(state.as_input())[0])
 
-        return action, action_probs
+        return action
 
     def simulate(self, length, state, simulation_type, action):
 
         state = copy.deepcopy(state)
-        mean = 0
+        data = []
         for simulation_episode in range(length):
             self.simulation_state_update(state, action)
-            mean += constants.energy_weight * action + state.aoi_receiver
+            cost = constants.energy_weight * action + state.aoi_receiver
             if simulation_type == "random":
                 action = random.randint(0, 1)
+            elif simulation_type == "reinforce":
+                action = self.action(state, 0)
+            data += [[state.aoi_sender, state.aoi_receiver, state.last_action, action, cost]]
 
-        mean /= length
+        return data
 
+    @staticmethod
+    def cost_mean_from_simulation_data(data):
+        mean = 0
+        for d in data:
+            mean += d[4]
+        mean /= len(data)
         return mean
+
+    @staticmethod
+    def returns_from_costs(costs):
+
+        returns = -(costs - np.mean(costs)) / np.std(costs)
+
+        # reverse the array
+        returns = returns[::-1]
+
+        for i in range(len(returns)):
+            if i > 0:
+                returns[i] += returns[i - 1]
+
+        # reverse the array
+        returns = returns[::-1]
+
+        return returns
+
+    def derivatives_from_state_actions(self, states, actions):
+
+        derivatives = np.zeros(constants.reinforce_rollout_length)
+
+        for episode_no in range(len(states)):
+            if actions[episode_no]:
+                derivatives[episode_no] = 1 / self.action_prob
+            else:
+                derivatives[episode_no] = 1 / (self.action_prob - 1)
+
+        return derivatives
 
     def simulation_state_update(self, state, action):
         state.last_action = 0
@@ -186,94 +216,3 @@ class Strategy:
             self.no_of_sends += 1
         self.last_aoi_receiver = state.aoi_receiver
         self.last_aoi_sender = state.aoi_sender
-
-    def remember(self, state, action, action_prob, cost):
-        self.gradients.append(self.one_hot_encode(action) - action_prob)
-        self.states.append(state.as_input())
-        self.costs.append(cost)
-        self.probs.append(action_prob)
-
-    @staticmethod
-    def one_hot_encode(action):
-        if action == 0:
-            return np.array([1, 0])
-        return np.array([0, 1])
-
-    # taken from
-    # https://medium.com/swlh/policy-gradient-reinforcement-learning-with-keras-57ca6ed32555
-    def update_reinforce(self, learning_rate):
-        """Updates the policy network using the NN model.
-        This function is used after the MC sampling is done - following
-        delta theta = alpha * gradient + log pi"""
-
-        # get X
-        states = np.vstack(self.states)
-
-        # get Y
-        gradients = np.vstack(self.gradients)
-        rewards = self.get_rewards()
-        gradients *= rewards
-        gradients = learning_rate * np.vstack([gradients]) + self.probs
-
-        history = self.nn.model.train_on_batch(states, gradients)
-
-        self.states, self.probs, self.gradients, self.costs = [], [], [], []
-
-        return history
-
-    # taken from
-    # https://medium.com/swlh/policy-gradient-reinforcement-learning-with-keras-57ca6ed32555
-    def get_rewards(self):
-
-        rewards = - np.array(self.costs)
-
-        mean_rewards = np.mean(rewards)
-        std_rewards = np.std(rewards)
-        rewards = (rewards - mean_rewards) / (std_rewards + 1e-7)  # avoiding zero div
-
-        rewards = np.vstack(rewards)
-
-        return rewards
-
-    # TODO delete after test
-    def test(self, data):
-        print("----------   TEST STRATEGY   ----------")
-        print("strategy type: " + str(self.strategy_type))
-
-        costs = []
-        risky_states = 0
-        state = State.initial_state()
-
-        for episode_no in range(constants.test_episodes):
-
-            action, _ = self.action(state, 0)
-
-            state.update(action)
-
-            cost = constants.energy_weight * action + state.aoi_receiver
-            costs += [cost]
-
-            if state.aoi_receiver >= constants.risky_aoi:
-                risky_states += 1
-
-            if episode_no % int(0.2 * constants.test_episodes) == 0:
-                print(str(int(episode_no / constants.test_episodes * 100)) + " %")
-
-        print("100 %")
-
-        avg_cost = sum(costs) / len(costs)
-        risk = utils.semi_std_dev(costs)
-        fishburn_risk = utils.fishburn_measure(costs, constants.energy_weight + 1)
-        print("avg cost: " + str(avg_cost))
-        print("risk: " + str(risk))
-        print("risky states: " + str(risky_states))
-        print("fishburn's measure: " + str(fishburn_risk))
-
-        print("----------   TEST COMPLETE   ----------")
-        print()
-
-        data['strategy'] += [self.strategy_type]
-        data['avg_cost'] += [avg_cost]
-        data['risk'] += [risk]
-        data['risky_states'] += [risky_states]
-        data['fishburn'] += [fishburn_risk]

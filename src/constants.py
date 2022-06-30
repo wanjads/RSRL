@@ -16,6 +16,6 @@ risky_aoi = 10
 basic_monte_carlo_simulation_no = 100
 basic_monte_carlo_simulation_length = 5
 
-# TODO: optimize this hyperparameter
-# TODO: lernt der algorithmus überhaupt? cost nach rollouts
-reinforce_rollout_length = 100                                                         # batches = eps/rrl
+
+reinforce_rollout_length = 300                                                        # batches = eps/rrl
+no_train_trajectories = 1000
