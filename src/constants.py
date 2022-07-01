@@ -1,5 +1,5 @@
-train_episodes = 1000
-test_episodes = 1000
+train_episodes = 10000
+test_episodes = 10000
 new_package_prob = 0.5
 send_prob = 0.9
 energy_weight = 3

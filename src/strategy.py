@@ -15,7 +15,7 @@ class Strategy:
         self.risk_factor = risk_factor
 
         # the nn for the strategy
-        self.nn = network.NN(3, "mean_squared_error")
+        self.nn = network.NN(3)
 
         # these strategies need extra information
         if strategy_type == "mean_variance" or strategy_type == "semi_std_deviation":
@@ -134,8 +134,6 @@ class Strategy:
             mean_wait /= constants.basic_monte_carlo_simulation_no
             mean_send /= constants.basic_monte_carlo_simulation_no
             action = int(mean_send < mean_wait)
-        elif self.strategy_type == "cvar":
-            action = np.argmin(self.nn.out(state.as_input())[0])
         elif self.strategy_type == "REINFORCE_action_prob":
             action_probs = [(1 - self.action_prob), self.action_prob]
             action = np.random.choice([0, 1], p=action_probs)
