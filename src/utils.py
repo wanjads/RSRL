@@ -81,35 +81,6 @@ def semi_std_dev(costs):
     return math.sqrt(risk)
 
 
-# plot a moving average of data over episodes
-def plot_moving_avg(data, title, episodes, strategy_type):
-    # calculate moving average
-    averages = []
-    length = constants.moving_average_length
-    for i in range(len(data) - length + 1):
-        average = sum(data[i:i + length]) / length
-        averages.append(average)
-
-    df = pd.DataFrame({'episode': range(episodes - length + 1), title: averages})
-
-    if strategy_type == "utility_function":
-        risk_factor = constants.alpha_utility
-    elif strategy_type == "cvar":
-        risk_factor = constants.alpha_cvar
-    elif strategy_type == "mean_variance":
-        risk_factor = constants.mv_risk_factor
-    else:
-        risk_factor = "---"
-
-    fig = px.line(df, x='episode', y=title, title='moving average: ' + title + ' over ' + str(length) + ' episodes.'
-                                                  + ' strategy type: ' + str(strategy_type)
-                                                  + '\t \t' + 'risk factor: ' + str(risk_factor)
-                                                  + ', p: ' + str(constants.new_package_prob)
-                                                  + ', lambda: ' + str(constants.send_prob)
-                                                  + ', energy weight: ' + str(constants.energy_weight))
-    fig.show()
-
-
 def bar_chart(data, title, rev):
 
     # sort dict by title entry
@@ -144,4 +115,15 @@ def risk_factor_risk_bar_chart(data, step, title):
     data = {'risk_factor': np.arange(0, 10 * step, step), 'risk': data['risk']}
     df = pd.DataFrame(data)
     fig = px.bar(df, x='risk_factor', y='risk', title=title)
+    fig.show()
+
+
+def sigmoid(x):
+    return 1 / (1 + math.exp(-x))
+
+
+def line_plot(data):
+
+    df = pd.DataFrame(dict(eps=range(len(data)), data=data))
+    fig = px.line(df, x="eps", y="data")
     fig.show()

@@ -5,7 +5,6 @@ import numpy as np
 import utils
 import bisect
 import network
-from state import State
 
 
 class Strategy:
@@ -31,11 +30,14 @@ class Strategy:
             self.no_of_sends = 0
             self.last_aoi_receiver = 1
             self.last_aoi_sender = 0
-        if strategy_type == "REINFORCE":
-            self.action_prob = 0.5
+        if strategy_type == "REINFORCE_action_prob":
+            self.action_prob = 0.6
+        if strategy_type == "REINFORCE_sigmoid":
+            self.flat = 4  # Tendenz nach oben
+            self.shift = 12  # Tendenz nach oben
 
-            # the tabular q-learning update dependent on risk sensitivity
-    def update(self, old_state, state, action, learning_rate, episode_no):
+    # the tabular q-learning update dependent on risk sensitivity
+    def update(self, old_state, state, action, episode_no):
 
         cost = constants.energy_weight * action + state.aoi_receiver
         inp = old_state.as_input()
@@ -83,16 +85,27 @@ class Strategy:
         else:
             print("a strategy update for strategy type " + self.strategy_type + " is not implemented")
 
-    def update_reinforce(self, states, actions, costs, learning_rate):
+    def update_reinforce(self, states, actions, costs):
 
-        returns = self.returns_from_costs(costs)
+        if self.strategy_type == "REINFORCE_action_prob":
+            returns = self.returns_from_costs(costs)
+            derivatives = self.derivatives_from_state_actions(states, actions)
 
-        derivatives = self.derivatives_from_state_actions(states, actions)
+            for episode_no in range(len(states)):
+                self.action_prob = \
+                    max(0, min(1, self.action_prob + 0.000005 * derivatives[episode_no] * returns[episode_no]))
 
-        for episode_no in range(len(states)):
-            self.action_prob = \
-                max(0, min(1, self.action_prob + learning_rate * derivatives[episode_no] * returns[episode_no]))
-            print(self.action_prob)
+        elif self.strategy_type == "REINFORCE_sigmoid":
+            returns = self.returns_from_costs(costs)
+            derivatives = self.derivatives_sigmoid_strategy(states, actions)
+
+            for episode_no in range(len(states)):
+                self.flat += 0.00001 * derivatives[episode_no][0] * returns[episode_no]
+                self.shift += 0.0001 * derivatives[episode_no][1] * returns[episode_no]
+
+            # print(self.flat)
+            # print(self.shift)
+            # print(" ----- ")
 
     def action(self, state, epsilon):
         if self.strategy_type == 'always':
@@ -123,8 +136,12 @@ class Strategy:
             action = int(mean_send < mean_wait)
         elif self.strategy_type == "cvar":
             action = np.argmin(self.nn.out(state.as_input())[0])
-        elif self.strategy_type == "REINFORCE":
+        elif self.strategy_type == "REINFORCE_action_prob":
             action_probs = [(1 - self.action_prob), self.action_prob]
+            action = np.random.choice([0, 1], p=action_probs)
+        elif self.strategy_type == "REINFORCE_sigmoid":
+            action_probs = [(1 - utils.sigmoid(self.flat * state.aoi_receiver - self.shift)),
+                            utils.sigmoid(self.flat * state.aoi_receiver - self.shift)]
             action = np.random.choice([0, 1], p=action_probs)
         elif random.random() < epsilon:
             action = random.randint(0, 1)
@@ -186,6 +203,22 @@ class Strategy:
                 derivatives[episode_no] = 1 / self.action_prob
             else:
                 derivatives[episode_no] = 1 / (self.action_prob - 1)
+
+        return derivatives
+
+    def derivatives_sigmoid_strategy(self, states, actions):
+
+        derivatives = np.zeros((constants.reinforce_rollout_length, 2))
+
+        for episode_no in range(len(states)):
+            if actions[episode_no]:
+                derivatives[episode_no][0] = \
+                    (1 - utils.sigmoid(self.flat * states[episode_no][1] - self.shift)) * states[episode_no][1]
+                derivatives[episode_no][1] = utils.sigmoid(self.flat * states[episode_no][1] - self.shift) - 1
+            else:
+                derivatives[episode_no][0] = \
+                    - utils.sigmoid(self.flat * states[episode_no][1] - self.shift) * states[episode_no][1]
+                derivatives[episode_no][1] = utils.sigmoid(self.flat * states[episode_no][1] - self.shift)
 
         return derivatives
 
