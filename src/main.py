@@ -47,12 +47,12 @@ def train_reinforce(strategy_type, risk_factor):
     print("----------    TRAIN MODEL    ----------")
     print("strategy type: " + strategy_type)
 
-    state = State.initial_state()
     strategy = Strategy(strategy_type, risk_factor)
     parameters = [[], []]
 
     for trajectory_no in range(constants.no_train_trajectories):
 
+        state = State.initial_state()
         costs = np.zeros(constants.reinforce_rollout_length)
         actions = np.zeros(constants.reinforce_rollout_length)
         states = np.zeros((constants.reinforce_rollout_length, 3))
@@ -68,14 +68,60 @@ def train_reinforce(strategy_type, risk_factor):
 
         strategy.update_reinforce(states, actions, costs)
 
-        parameters[0] += [strategy.flat]
-        parameters[1] += [strategy.shift]
+        if strategy_type == "REINFORCE_sigmoid":
+            parameters[0] += [strategy.flat]
+            parameters[1] += [strategy.shift]
 
         if trajectory_no % int(0.2 * constants.no_train_trajectories) == 0:
             print(str(int(trajectory_no / constants.no_train_trajectories * 100)) + " %")
 
-    utils.line_plot(parameters[0])
-    utils.line_plot(parameters[1])
+    if strategy_type == "REINFORCE_sigmoid":
+        utils.line_plot(parameters[0])
+        utils.line_plot(parameters[1])
+
+    print("100 %")
+    print("---------- TRAINING COMPLETE ----------")
+    print()
+
+    return strategy
+
+
+def train_risk_monte_carlo(strategy_type, risk_factor):
+
+    print("----------    TRAIN MODEL    ----------")
+    print("strategy type: " + strategy_type)
+
+    strategy = Strategy(strategy_type, risk_factor)
+    initial_aoi = [0, 0]
+
+    for trajectory_no in range(constants.risk_monte_carlo_trajectories):
+
+        state = State(initial_aoi[0], initial_aoi[1], 0)
+        costs = np.zeros(constants.risk_monte_carlo_rollout_length)
+
+        for episode_no in range(constants.risk_monte_carlo_rollout_length):
+
+            if episode_no > 0:
+                action = strategy.action(state, 0)
+            else:
+                action = trajectory_no % 2
+            state.update(action)
+
+            costs[episode_no] = state.aoi_receiver + constants.energy_weight * action
+
+        strategy.update_risk_monte_carlo(State(initial_aoi[0], initial_aoi[1], 0), trajectory_no % 2, costs)
+
+        if trajectory_no % 2 == 1:
+            initial_aoi[0] += 1
+            if initial_aoi[0] > constants.aoi_cap:
+                initial_aoi[0] = 0
+                initial_aoi[1] += 1
+            if initial_aoi[1] > constants.aoi_cap:
+                initial_aoi[0] = 0
+                initial_aoi[1] = 0
+
+        if trajectory_no % int(0.2 * constants.risk_monte_carlo_trajectories) == 0:
+            print(str(int(trajectory_no / constants.risk_monte_carlo_trajectories * 100)) + " %")
 
     print("100 %")
     print("---------- TRAINING COMPLETE ----------")
@@ -148,47 +194,49 @@ def main():
     # never_strategy = Strategy("never", 0)
 
     # init a strategy acting uniformly random
-    random_strategy = Strategy("random", 0)
+    # random_strategy = Strategy("random", 0)
 
     # init a benchmark sending, if a new package arrived
-    benchmark_strategy = Strategy("benchmark", 0)
+    # benchmark_strategy = Strategy("benchmark", 0)
     # init a more sophisticated benchmark
     benchmark2_strategy = Strategy("benchmark2", 0)
 
     # train a risk neutral strategy and risk averse strategies in different variants
-    risk_neutral_strategy = train("risk_neutral", 0)
-    stochastic_risk_neutral_strategy = train("stochastic", 0)
+    # risk_neutral_strategy = train("risk_neutral", 0)
+    # stochastic_risk_neutral_strategy = train("stochastic", 0)
     # variance_strategy = train("mean_variance", 0.3)
     # semi_std_dev_strategy = train("semi_std_deviation", 0.1)
     # stone_strategy = train("stone_measure", 0.1)
-    cvar_strategy = train("cvar", 0.05)
+    # cvar_strategy = train("cvar", 0.05)
     # utility_strategy = train("utility_function", 0.05)
-    risk_states_strategy = train("risk_states", 10)
+    # risk_states_strategy = train("risk_states", 10)
     basic_monte_carlo_strategy = train("basic_monte_carlo", 0)
     # reinforce_strategy_action_prob = train_reinforce("REINFORCE_action_prob", 0)
     # reinforce_strategy_sigmoid = train_reinforce("REINFORCE_sigmoid", 0)
-    reinforce_strategy_action_prob = Strategy("REINFORCE_action_prob", 0)
-    reinforce_strategy_sigmoid = Strategy("REINFORCE_sigmoid", 0)
+    # reinforce_strategy_action_prob = Strategy("REINFORCE_action_prob", 0)
+    # reinforce_strategy_sigmoid = Strategy("REINFORCE_sigmoid", 0)
+    risk_monte_carlo_strategy = train_risk_monte_carlo("risk_monte_carlo", 0)
 
     # test all strategies
     # data collects all costs and risks
     data = {'strategy': [], 'avg_cost': [], 'risk': [], 'risky_states': [], 'fishburn': []}
     # test(always_strategy, data)
     # test(never_strategy, data)
-    test(random_strategy, data)
-    test(benchmark_strategy, data)
+    # test(random_strategy, data)
+    # test(benchmark_strategy, data)
     test(benchmark2_strategy, data)
-    test(risk_neutral_strategy, data)
-    test(stochastic_risk_neutral_strategy, data)
+    # test(risk_neutral_strategy, data)
+    # test(stochastic_risk_neutral_strategy, data)
     # test(variance_strategy, data)
     # test(semi_std_dev_strategy, data)
     # test(stone_strategy, data)
-    test(cvar_strategy, data)
+    # test(cvar_strategy, data)
     # test(utility_strategy, data)
-    test(risk_states_strategy, data)
+    # test(risk_states_strategy, data)
     test(basic_monte_carlo_strategy, data)
-    test(reinforce_strategy_action_prob, data)
-    test(reinforce_strategy_sigmoid, data)
+    # test(reinforce_strategy_action_prob, data)
+    # test(reinforce_strategy_sigmoid, data)
+    test(risk_monte_carlo_strategy, data)
 
     # plot bar charts
     utils.bar_chart(data, 'avg_cost', True)

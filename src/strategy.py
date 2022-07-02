@@ -30,6 +30,8 @@ class Strategy:
             self.no_of_sends = 0
             self.last_aoi_receiver = 1
             self.last_aoi_sender = 0
+        if strategy_type == "risk_monte_carlo":
+            self.penalties = np.zeros((constants.aoi_cap + 1, constants.aoi_cap + 1, 2))
         if strategy_type == "REINFORCE_action_prob":
             self.action_prob = 0.6
         if strategy_type == "REINFORCE_sigmoid":
@@ -103,9 +105,8 @@ class Strategy:
                 self.flat += 0.00001 * derivatives[episode_no][0] * returns[episode_no]
                 self.shift += 0.0001 * derivatives[episode_no][1] * returns[episode_no]
 
-            # print(self.flat)
-            # print(self.shift)
-            # print(" ----- ")
+    def update_risk_monte_carlo(self, state, action, costs):
+        self.penalties[state.aoi_sender][state.aoi_receiver][action] += sum(costs)
 
     def action(self, state, epsilon):
         if self.strategy_type == 'always':
@@ -134,10 +135,18 @@ class Strategy:
             mean_wait /= constants.basic_monte_carlo_simulation_no
             mean_send /= constants.basic_monte_carlo_simulation_no
             action = int(mean_send < mean_wait)
-        elif self.strategy_type == "REINFORCE_action_prob":
+        elif self.strategy_type == 'risk_monte_carlo':
+            action = 0
+            if self.penalties[state.aoi_sender][state.aoi_receiver][0] == \
+                    self.penalties[state.aoi_sender][state.aoi_receiver][1]:
+                action = random.randint(0, 1)
+            elif self.penalties[state.aoi_sender][state.aoi_receiver][0] > \
+                    self.penalties[state.aoi_sender][state.aoi_receiver][1]:
+                action = 1
+        elif self.strategy_type == 'REINFORCE_action_prob':
             action_probs = [(1 - self.action_prob), self.action_prob]
             action = np.random.choice([0, 1], p=action_probs)
-        elif self.strategy_type == "REINFORCE_sigmoid":
+        elif self.strategy_type == 'REINFORCE_sigmoid':
             action_probs = [(1 - utils.sigmoid(self.flat * state.aoi_receiver - self.shift)),
                             utils.sigmoid(self.flat * state.aoi_receiver - self.shift)]
             action = np.random.choice([0, 1], p=action_probs)
