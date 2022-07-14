@@ -124,6 +124,11 @@ class Strategy:
                        + constants.new_package_prob / (1 - constants.new_package_prob) ** 2) \
                     >= constants.energy_weight:
                 action = 1
+        elif self.strategy_type == 'optimal':
+            action = 0
+            # TODO this is tuned for specific lambda and e, generalise this!
+            if state.aoi_receiver - state.aoi_sender >= 2:
+                action = 1
         elif self.strategy_type == 'basic_monte_carlo':
             mean_wait = 0
             mean_send = 0
