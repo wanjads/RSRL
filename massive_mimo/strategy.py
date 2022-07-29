@@ -10,13 +10,18 @@ class Strategy:
         self.risk_factor = risk_factor
         self.map = m
 
+        # TODO
+        # next step: think about a parameterization of the strategy
+        # then try to use REINFORCE
+        # IMPORTANT: power constraint from the paper, switch reward from max sum to max min
+
     # the tabular q-learning update dependent on risk sensitivity
     def update(self, old_state, state, action, episode_no):
-
-        print("a strategy update for strategy type " + self.strategy_type + " is not implemented")
+        pass
+        # print("a strategy update for strategy type " + self.strategy_type + " is not implemented")
 
     def action(self, state, epsilon):
 
-        action = np.random.rand(constants.M, constants.K)
+        action = 1 / constants.K * np.ones(constants.K)
 
         return action

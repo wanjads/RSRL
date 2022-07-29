@@ -6,6 +6,7 @@ import numpy as np
 from state import State
 import constants
 import copy
+from network import NN
 
 
 def train(strategy_type, m, risk_factor):
@@ -41,7 +42,7 @@ def test(strategy, m, data):
     print("----------   TEST STRATEGY   ----------")
     print("strategy type: " + str(strategy.strategy_type))
 
-    costs = []
+    rewards = []
     initial_action = 1/constants.K * np.ones(constants.K)
     state = State.initial_state(initial_action, m)
 
@@ -51,24 +52,24 @@ def test(strategy, m, data):
 
         state.update(action)
 
-        cost = utils.cost(state)
-        costs += [cost]
+        reward = utils.reward(state)
+        rewards += [reward]
 
         if episode_no % int(0.2 * constants.test_episodes) == 0:
             print(str(int(episode_no / constants.test_episodes * 100)) + " %")
 
     print("100 %")
 
-    avg_cost = sum(costs) / len(costs)
-    risk = utils.semi_std_dev(costs)
-    print("avg cost: " + str(avg_cost))
+    avg_reward = sum(rewards) / len(rewards)
+    risk = utils.semi_std_dev(rewards)
+    print("avg reward: " + str(avg_reward))
     print("risk: " + str(risk))
 
     print("----------   TEST COMPLETE   ----------")
     print()
 
     data['strategy'] += [strategy.strategy_type]
-    data['avg_cost'] += [avg_cost]
+    data['avg_reward'] += [avg_reward]
     data['risk'] += [risk]
 
 
@@ -85,7 +86,7 @@ def main():
     strategy = train("TEST", m, 0)
 
     # test strategies
-    data = {'strategy': [], 'avg_cost': [], 'risk': []}
+    data = {'strategy': [], 'avg_reward': [], 'risk': []}
     test(strategy, m, data)
 
     # TEST TEST TEST

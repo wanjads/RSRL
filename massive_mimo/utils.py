@@ -26,7 +26,7 @@ def sinrs(m, action):
     return s
 
 
-def cost(state):
+def reward(state):
 
     c = 0
     for k in range(constants.K):
