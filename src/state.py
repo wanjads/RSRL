@@ -31,4 +31,4 @@ class State:
     # the initial state
     @staticmethod
     def initial_state():
-        return State(0, 0, 0)
+        return State(0, 1, 0)

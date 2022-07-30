@@ -29,6 +29,8 @@ class Strategy:
             self.send_if_new_package()
         elif strategy_type == "stone_measure":
             self.target = constants.energy_weight + 1
+        elif strategy_type == "value_iteration":
+            self.value_iteration()
 
     # the tabular q-learning update dependent on risk sensitivity
     def update(self, old_state, state, action, learning_rate, episode_no):
@@ -98,3 +100,48 @@ class Strategy:
         for aoir in range(constants.aoi_cap + 1):
             for la in range(2):
                 self.qvalues[0][aoir][la][1] = -1
+
+    def value_iteration(self):
+
+        vvalues = np.zeros((constants.aoi_cap + 1, constants.aoi_cap + 1))
+        qvalues = np.zeros((constants.aoi_cap + 1, constants.aoi_cap + 1, 2))
+
+        eps = 1
+        for iteration in range(eps):
+            for aois in range(constants.aoi_cap + 1):
+                print(aois + 1000 * iteration)
+                for aoir in range(constants.aoi_cap + 1):
+                    for action in range(2):
+                        summe = 0
+                        p_summe = 0
+                        for aois2 in range(constants.aoi_cap + 1):
+                            for aoir2 in range(constants.aoi_cap + 1):
+                                if not action:
+                                    p = constants.new_package_prob * \
+                                        (aois2 == 0 and (aoir2 == aoir + 1 or aoir2 == constants.aoi_cap == aoir))\
+                                        + (1 - constants.new_package_prob) * \
+                                        ((aois2 == aois + 1 or aois2 == constants.aoi_cap == aois) and
+                                         (aoir2 == aoir + 1 or aoir2 == constants.aoi_cap == aoir))
+                                    r = aoir2
+                                else:
+                                    p = constants.new_package_prob * constants.send_prob * \
+                                        (aois2 == 0 and (aoir2 == aois + 1 or aoir2 == constants.aoi_cap == aois))\
+                                        + constants.new_package_prob * (1 - constants.send_prob) * \
+                                        (aois2 == 0 and (aoir2 == aoir + 1 or aoir2 == constants.aoi_cap == aoir))\
+                                        + (1 - constants.new_package_prob) * constants.send_prob * \
+                                        ((aois2 == aois + 1 or aois2 == constants.aoi_cap == aois) and
+                                         (aoir2 == aois + 1 or aoir2 == constants.aoi_cap == aois))\
+                                        + (1 - constants.new_package_prob) * (1 - constants.send_prob) * \
+                                        ((aois2 == aois + 1 or aois2 == constants.aoi_cap == aois) and
+                                         (aoir2 == aoir + 1 or aoir2 == constants.aoi_cap == aoir))
+                                    r = aoir2 + constants.energy_weight
+                                summe += p * (r + constants.gamma * vvalues[aois2][aoir2])
+                                p_summe += p
+                        qvalues[aois][aoir][action] = summe
+                    vvalues[aois][aoir] = np.min(qvalues[aois][aoir])
+
+        for aois in range(constants.aoi_cap + 1):
+            for aoir in range(constants.aoi_cap + 1):
+                for la in range(2):
+                    self.qvalues[aois][aoir][la][0] = qvalues[aois][aoir][0]
+                    self.qvalues[aois][aoir][la][1] = qvalues[aois][aoir][1]
