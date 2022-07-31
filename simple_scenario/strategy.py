@@ -30,8 +30,6 @@ class Strategy:
             self.no_of_sends = 0
             self.last_aoi_receiver = 1
             self.last_aoi_sender = 0
-        if strategy_type == "risk_monte_carlo":
-            self.penalties = np.zeros((constants.aoi_cap + 1, constants.aoi_cap + 1, 2))
         if strategy_type == "REINFORCE_action_prob":
             self.action_prob = 0.6
         if strategy_type == "REINFORCE_sigmoid":
@@ -81,9 +79,6 @@ class Strategy:
                 risky_state_cost = self.risk_factor * cost
             self.nn.train_model(inp, action, risky_state_cost)
 
-        elif self.strategy_type == "basic_monte_carlo":  # own idea
-            self.update_estimates(state, episode_no)
-
         else:
             print("a strategy update for strategy type " + self.strategy_type + " is not implemented")
 
@@ -104,9 +99,6 @@ class Strategy:
             for episode_no in range(len(states)):
                 self.flat += 0.000001 * derivatives[episode_no][0] * returns[episode_no]
                 self.shift += 0.00001 * derivatives[episode_no][1] * returns[episode_no]
-
-    def update_risk_monte_carlo(self, state, action, costs):
-        self.penalties[state.aoi_sender][state.aoi_receiver][action] += sum(costs)
 
     def action(self, state, epsilon):
         if self.strategy_type == 'always':
@@ -140,14 +132,6 @@ class Strategy:
             mean_wait /= constants.basic_monte_carlo_simulation_no
             mean_send /= constants.basic_monte_carlo_simulation_no
             action = int(mean_send < mean_wait)
-        elif self.strategy_type == 'risk_monte_carlo':
-            action = 0
-            if self.penalties[state.aoi_sender][state.aoi_receiver][0] == \
-                    self.penalties[state.aoi_sender][state.aoi_receiver][1]:
-                action = random.randint(0, 1)
-            elif self.penalties[state.aoi_sender][state.aoi_receiver][0] > \
-                    self.penalties[state.aoi_sender][state.aoi_receiver][1]:
-                action = 1
         elif self.strategy_type == 'REINFORCE_action_prob':
             action_probs = [(1 - self.action_prob), self.action_prob]
             action = np.random.choice([0, 1], p=action_probs)
@@ -250,14 +234,3 @@ class Strategy:
             state.aoi_sender += 1
         if random.random() < self.p_estimate:
             state.aoi_sender = 0
-
-    def update_estimates(self, state, episode_no):
-        self.p_estimate = (int(state.aoi_sender == 0) + episode_no * self.p_estimate) / (episode_no + 1)
-        if state.last_action and not self.last_aoi_receiver == self.last_aoi_sender:
-            if state.aoi_receiver <= self.last_aoi_receiver:
-                self.lambda_estimate = (1 + self.no_of_sends * self.lambda_estimate) / (self.no_of_sends + 1)
-            else:
-                self.lambda_estimate = self.no_of_sends * self.lambda_estimate / (self.no_of_sends + 1)
-            self.no_of_sends += 1
-        self.last_aoi_receiver = state.aoi_receiver
-        self.last_aoi_sender = state.aoi_sender

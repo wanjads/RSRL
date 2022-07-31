@@ -90,50 +90,6 @@ def train_reinforce(strategy_type, risk_factor):
     return strategy
 
 
-def train_risk_monte_carlo(strategy_type, risk_factor):
-
-    print("----------    TRAIN MODEL    ----------")
-    print("strategy type: " + strategy_type)
-
-    strategy = Strategy(strategy_type, risk_factor)
-    initial_aoi = [0, 0]
-
-    for trajectory_no in range(constants.risk_monte_carlo_trajectories):
-
-        state = State(initial_aoi[0], initial_aoi[1], 0)
-        costs = np.zeros(constants.risk_monte_carlo_rollout_length)
-
-        for episode_no in range(constants.risk_monte_carlo_rollout_length):
-
-            if episode_no > 0:
-                action = strategy.action(state, 0)
-            else:
-                action = trajectory_no % 2
-            state.update(action)
-
-            costs[episode_no] = state.aoi_receiver + constants.energy_weight * action
-
-        strategy.update_risk_monte_carlo(State(initial_aoi[0], initial_aoi[1], 0), trajectory_no % 2, costs)
-
-        if trajectory_no % 2 == 1:
-            initial_aoi[0] += 1
-            if initial_aoi[0] > constants.aoi_cap:
-                initial_aoi[0] = 0
-                initial_aoi[1] += 1
-            if initial_aoi[1] > constants.aoi_cap:
-                initial_aoi[0] = 0
-                initial_aoi[1] = 0
-
-        if trajectory_no % int(0.2 * constants.risk_monte_carlo_trajectories) == 0:
-            print(str(int(trajectory_no / constants.risk_monte_carlo_trajectories * 100)) + " %")
-
-    print("100 %")
-    print("---------- TRAINING COMPLETE ----------")
-    print()
-
-    return strategy
-
-
 # test a strategy calculating avg costs and risk
 def test(strategy, data):
     print("----------   TEST STRATEGY   ----------")
@@ -178,16 +134,6 @@ def test(strategy, data):
     data['fishburn'] += [fishburn_risk]
 
 
-def risk_factor_train_test(strategy, step, data):
-    strategies = []
-    for risk in range(10):
-        strategies += [train(strategy, step * risk)]
-    for strategy in strategies:
-        test(strategy, data)
-    utils.risk_factor_cost_bar_chart(data, step, strategy.strategy_type)
-    utils.risk_factor_risk_bar_chart(data, step, strategy.strategy_type)
-
-
 def main():
 
     # set a random seed for reproducibility
@@ -208,7 +154,7 @@ def main():
     optimal_strategy = Strategy("optimal", 0)
 
     # train a risk neutral strategy and risk averse strategies in different variants
-    # risk_neutral_strategy = train("risk_neutral", 0)
+    risk_neutral_strategy = train("risk_neutral", 0)
     # stochastic_risk_neutral_strategy = train("stochastic", 0)
     # variance_strategy = train("mean_variance", 0.3)
     # semi_std_dev_strategy = train("semi_std_deviation", 0.1)
@@ -216,13 +162,12 @@ def main():
     # cvar_strategy = train("cvar", 0.05)
     # utility_strategy = train("utility_function", 0.05)
     # risk_states_strategy = train("risk_states", 10)
-    # basic_monte_carlo_strategy = train("basic_monte_carlo", 0)
+    # basic_monte_carlo_strategy = Strategy("basic_monte_carlo", 0)
     # reinforce_strategy_action_prob = train_reinforce("REINFORCE_action_prob", 0)
     # TODO die gelernte sigmoid strategie ist irgendwie besser als die selbe ohne vorheriges lernen mit denselben param
-    reinforce_strategy_sigmoid = train_reinforce("REINFORCE_sigmoid", 0)
+    # reinforce_strategy_sigmoid = train_reinforce("REINFORCE_sigmoid", 0)
     # reinforce_strategy_action_prob = Strategy("REINFORCE_action_prob", 0)
     # reinforce_strategy_sigmoid = Strategy("REINFORCE_sigmoid", 0)
-    # risk_monte_carlo_strategy = train_risk_monte_carlo("risk_monte_carlo", 0)
 
     # test all strategies
     # data collects all costs and risks
@@ -233,7 +178,7 @@ def main():
     # test(benchmark_strategy, data)
     # test(benchmark2_strategy, data)
     test(optimal_strategy, data)
-    # test(risk_neutral_strategy, data)
+    test(risk_neutral_strategy, data)
     # test(stochastic_risk_neutral_strategy, data)
     # test(variance_strategy, data)
     # test(semi_std_dev_strategy, data)
@@ -243,8 +188,7 @@ def main():
     # test(risk_states_strategy, data)
     # test(basic_monte_carlo_strategy, data)
     # test(reinforce_strategy_action_prob, data)
-    test(reinforce_strategy_sigmoid, data)
-    # test(risk_monte_carlo_strategy, data)
+    # test(reinforce_strategy_sigmoid, data)
 
     # plot bar charts
     utils.bar_chart(data, 'avg_cost', True)
