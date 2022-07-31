@@ -88,35 +88,35 @@ def main():
 
     # init two benchmark strategy sending never / in every episode
     always_strategy = Strategy("always", 0)
-    never_strategy = Strategy("never", 0)
+    # never_strategy = Strategy("never", 0)
 
     # init a benchmark sending, if a new package arrived
     benchmark_strategy = Strategy("benchmark", 0)
 
     # value iteration
-    value_iteration = Strategy("value_iteration", 0)
+    # value_iteration = Strategy("value_iteration", 0)
 
     # train a risk neutral strategy and risk averse strategies in different variants
     risk_neutral_strategy = train("risk_neutral", 0)
-    # variance_strategy = train("mean_variance", 0.3)
-    # semi_std_dev_strategy = train("semi_std_deviation", 0.1)
-    # stone_strategy = train("stone_measure", 0.1)
-    # cvar_strategy = train("cvar", 0.05)
-    # utility_strategy = train("utility_function", 0.05)
+    variance_strategy = train("mean_variance", 0.3)
+    semi_std_dev_strategy = train("semi_std_deviation", 0.1)
+    stone_strategy = train("stone_measure", 0.1)
+    cvar_strategy = train("cvar", 0.05)
+    utility_strategy = train("utility_function", 0.05)
 
     # test all strategies
     # data collects all costs and risks
     data = {'strategy': [], 'avg_cost': [], 'risk': []}
     test(always_strategy, data)
-    test(never_strategy, data)
+    # test(never_strategy, data)
     test(benchmark_strategy, data)
     test(risk_neutral_strategy, data)
-    # test(variance_strategy, data)
-    # test(semi_std_dev_strategy, data)
-    # test(stone_strategy, data)
-    # test(cvar_strategy, data)
-    # test(utility_strategy, data)
-    test(value_iteration, data)
+    test(variance_strategy, data)
+    test(semi_std_dev_strategy, data)
+    test(stone_strategy, data)
+    test(cvar_strategy, data)
+    test(utility_strategy, data)
+    # test(value_iteration, data)
 
     # plot bar charts
     utils.bar_chart(data, 'avg_cost', True)

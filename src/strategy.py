@@ -13,7 +13,7 @@ class Strategy:
         self.risk_factor = risk_factor
 
         # tabular saved q values
-        self.qvalues = np.zeros((constants.aoi_cap + 1, constants.aoi_cap + 1, 2, 2))
+        self.qvalues = np.zeros((constants.aoi_cap + 1, constants.aoi_cap + 1, 2))
 
         # cvar needs a sorted list of all past costs
         self.sorted_costs = []
@@ -37,12 +37,12 @@ class Strategy:
 
         cost = constants.energy_weight * action + state.aoi_receiver
         bisect.insort(self.sorted_costs, cost)
-        V = np.min(self.qvalues[state.aoi_sender][state.aoi_receiver][state.last_action])
-        old_q_value = self.qvalues[old_state.aoi_sender][old_state.aoi_receiver][old_state.last_action][action]
+        V = np.min(self.qvalues[state.aoi_sender][state.aoi_receiver])
+        old_q_value = self.qvalues[old_state.aoi_sender][old_state.aoi_receiver][action]
 
         if self.strategy_type == "utility_function":  # see shen et al. p.9 eq (13)
             # acceptance_lvl = 1, see shen et al. 2014 p. 5
-            self.qvalues[old_state.aoi_sender][old_state.aoi_receiver][old_state.last_action][action] = \
+            self.qvalues[old_state.aoi_sender][old_state.aoi_receiver][action] = \
                 old_q_value + learning_rate * \
                 (utils.utility_function(cost + constants.gamma * V - old_q_value, self.risk_factor) - 1)
 
@@ -50,18 +50,18 @@ class Strategy:
         elif self.strategy_type == "cvar":  # see zhou et al.
             risk = utils.cvar_risk(self.sorted_costs, self.risk_factor)
             cvar_cost = cost + 1 * risk  # mu seems to be irrelevant
-            self.qvalues[old_state.aoi_sender][old_state.aoi_receiver][old_state.last_action][action] = \
+            self.qvalues[old_state.aoi_sender][old_state.aoi_receiver][action] = \
                 (1 - learning_rate) * old_q_value + learning_rate * (cvar_cost + constants.gamma * V)
 
         elif self.strategy_type == "mean_variance":  # own idea
             self.mean = utils.running_mean(episode_no, self.mean, cost)
             mv_cost = cost + self.risk_factor * abs(cost - self.mean)
-            self.qvalues[old_state.aoi_sender][old_state.aoi_receiver][old_state.last_action][action] = \
+            self.qvalues[old_state.aoi_sender][old_state.aoi_receiver][action] = \
                 (1 - learning_rate) * old_q_value + learning_rate * (mv_cost + constants.gamma * V)
 
         elif self.strategy_type == "stone_measure":  # own idea
             stone_cost = cost + self.risk_factor*(cost - self.target)**2
-            self.qvalues[old_state.aoi_sender][old_state.aoi_receiver][old_state.last_action][action] = \
+            self.qvalues[old_state.aoi_sender][old_state.aoi_receiver][action] = \
                 (1 - learning_rate) * old_q_value + learning_rate * (stone_cost + constants.gamma * V)
 
         elif self.strategy_type == "semi_std_deviation":  # own idea
@@ -70,11 +70,11 @@ class Strategy:
                 sd_cost = cost
             else:
                 sd_cost = cost + self.risk_factor * (cost - self.mean)**2
-            self.qvalues[old_state.aoi_sender][old_state.aoi_receiver][old_state.last_action][action] = \
+            self.qvalues[old_state.aoi_sender][old_state.aoi_receiver][action] = \
                 (1 - learning_rate) * old_q_value + learning_rate * (sd_cost + constants.gamma * V)
 
         elif self.strategy_type == "risk_neutral":  # standard q-learning
-            self.qvalues[old_state.aoi_sender][old_state.aoi_receiver][old_state.last_action][action] = \
+            self.qvalues[old_state.aoi_sender][old_state.aoi_receiver][action] = \
                 (1 - learning_rate) * old_q_value + learning_rate * (cost + constants.gamma * V)
 
         else:
@@ -84,22 +84,20 @@ class Strategy:
         if random.random() < epsilon:
             action = random.randint(0, 1)
         else:
-            action = np.argmin(self.qvalues[state.aoi_sender][state.aoi_receiver][state.last_action])
+            action = np.argmin(self.qvalues[state.aoi_sender][state.aoi_receiver])
         return action
 
     def always_send(self):
         for aois in range(constants.aoi_cap + 1):
             for aoir in range(constants.aoi_cap + 1):
-                for la in range(2):
-                    self.qvalues[aois][aoir][la][1] = -1
+                self.qvalues[aois][aoir][1] = -1
 
     def never_send(self):
         pass  # this happens automatically
 
     def send_if_new_package(self):
         for aoir in range(constants.aoi_cap + 1):
-            for la in range(2):
-                self.qvalues[0][aoir][la][1] = -1
+            self.qvalues[0][aoir][1] = -1
 
     def value_iteration(self):
 
@@ -142,6 +140,5 @@ class Strategy:
 
         for aois in range(constants.aoi_cap + 1):
             for aoir in range(constants.aoi_cap + 1):
-                for la in range(2):
-                    self.qvalues[aois][aoir][la][0] = qvalues[aois][aoir][0]
-                    self.qvalues[aois][aoir][la][1] = qvalues[aois][aoir][1]
+                self.qvalues[aois][aoir][0] = qvalues[aois][aoir][0]
+                self.qvalues[aois][aoir][1] = qvalues[aois][aoir][1]
