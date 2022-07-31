@@ -35,8 +35,8 @@ class Strategy:
         if strategy_type == "REINFORCE_action_prob":
             self.action_prob = 0.6
         if strategy_type == "REINFORCE_sigmoid":
-            self.flat = 4  # Tendenz nach oben
-            self.shift = 12  # Tendenz nach oben
+            self.flat = 5.3219222624013645
+            self.shift = 8.352662521479429
 
     # the tabular q-learning update dependent on risk sensitivity
     def update(self, old_state, state, action, episode_no):
@@ -95,15 +95,15 @@ class Strategy:
 
             for episode_no in range(len(states)):
                 self.action_prob = \
-                    max(0, min(1, self.action_prob + 0.000005 * derivatives[episode_no] * returns[episode_no]))
+                    max(0, min(1, self.action_prob + 0.00000005 * derivatives[episode_no] * returns[episode_no]))
 
         elif self.strategy_type == "REINFORCE_sigmoid":
             returns = self.returns_from_costs(costs)
             derivatives = self.derivatives_sigmoid_strategy(states, actions)
 
             for episode_no in range(len(states)):
-                self.flat += 0.00001 * derivatives[episode_no][0] * returns[episode_no]
-                self.shift += 0.0001 * derivatives[episode_no][1] * returns[episode_no]
+                self.flat += 0.000001 * derivatives[episode_no][0] * returns[episode_no]
+                self.shift += 0.00001 * derivatives[episode_no][1] * returns[episode_no]
 
     def update_risk_monte_carlo(self, state, action, costs):
         self.penalties[state.aoi_sender][state.aoi_receiver][action] += sum(costs)
@@ -152,8 +152,9 @@ class Strategy:
             action_probs = [(1 - self.action_prob), self.action_prob]
             action = np.random.choice([0, 1], p=action_probs)
         elif self.strategy_type == 'REINFORCE_sigmoid':
-            action_probs = [(1 - utils.sigmoid(self.flat * state.aoi_receiver - self.shift)),
-                            utils.sigmoid(self.flat * state.aoi_receiver - self.shift)]
+            x = state.aoi_receiver - state.aoi_sender
+            action_probs = [(1 - utils.sigmoid(self.flat * x - self.shift)),
+                            utils.sigmoid(self.flat * x - self.shift)]
             action = np.random.choice([0, 1], p=action_probs)
         elif random.random() < epsilon:
             action = random.randint(0, 1)
@@ -223,14 +224,13 @@ class Strategy:
         derivatives = np.zeros((constants.reinforce_rollout_length, 2))
 
         for episode_no in range(len(states)):
+            x = states[episode_no][1] - states[episode_no][0]
             if actions[episode_no]:
-                derivatives[episode_no][0] = \
-                    (1 - utils.sigmoid(self.flat * states[episode_no][1] - self.shift)) * states[episode_no][1]
-                derivatives[episode_no][1] = utils.sigmoid(self.flat * states[episode_no][1] - self.shift) - 1
+                derivatives[episode_no][0] = (1 - utils.sigmoid(self.flat * x - self.shift)) * x
+                derivatives[episode_no][1] = utils.sigmoid(self.flat * x - self.shift) - 1
             else:
-                derivatives[episode_no][0] = \
-                    - utils.sigmoid(self.flat * states[episode_no][1] - self.shift) * states[episode_no][1]
-                derivatives[episode_no][1] = utils.sigmoid(self.flat * states[episode_no][1] - self.shift)
+                derivatives[episode_no][0] = - utils.sigmoid(self.flat * x - self.shift) * x
+                derivatives[episode_no][1] = utils.sigmoid(self.flat * x - self.shift)
 
         return derivatives
 

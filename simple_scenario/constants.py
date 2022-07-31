@@ -18,7 +18,7 @@ basic_monte_carlo_simulation_length = 5
 
 
 reinforce_rollout_length = 300                                                        # batches = eps/rrl
-no_train_trajectories = 100000
+no_train_trajectories = 10000
 
 risk_monte_carlo_rollout_length = 10
 risk_monte_carlo_trajectories = 10000000
