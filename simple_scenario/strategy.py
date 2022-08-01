@@ -1,4 +1,5 @@
 import copy
+import math
 import random
 import constants
 import numpy as np
@@ -160,7 +161,8 @@ class Strategy:
             action = random.randint(0, 1)
         elif self.strategy_type == 'stochastic':
             action = 0
-            if random.random() < self.nn.out(state.as_input())[0][1]:
+            out = self.nn.out(state.as_input())[0]
+            if random.random() < out[1] / out[0] + out[1]:
                 action = 1
         else:
             action = np.argmin(self.nn.out(state.as_input())[0])
