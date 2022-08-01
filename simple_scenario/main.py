@@ -208,8 +208,8 @@ def main():
     optimal_strategy = Strategy("optimal", 0)
 
     # train a risk neutral strategy and risk averse strategies in different variants
-    # risk_neutral_strategy = train("risk_neutral", 0)
-    # stochastic_risk_neutral_strategy = train("stochastic", 0)
+    #  risk_neutral_strategy = train("risk_neutral", 0)
+    stochastic_risk_neutral_strategy = train("stochastic", 0)
     # variance_strategy = train("mean_variance", 0.3)
     # semi_std_dev_strategy = train("semi_std_deviation", 0.1)
     # stone_strategy = train("stone_measure", 0.1)
@@ -219,7 +219,7 @@ def main():
     # basic_monte_carlo_strategy = train("basic_monte_carlo", 0)
     # reinforce_strategy_action_prob = train_reinforce("REINFORCE_action_prob", 0)
     # TODO die gelernte sigmoid strategie ist irgendwie besser als die selbe ohne vorheriges lernen mit denselben param
-    reinforce_strategy_sigmoid = train_reinforce("REINFORCE_sigmoid", 0)
+    # reinforce_strategy_sigmoid = train_reinforce("REINFORCE_sigmoid", 0)
     # reinforce_strategy_action_prob = Strategy("REINFORCE_action_prob", 0)
     # reinforce_strategy_sigmoid = Strategy("REINFORCE_sigmoid", 0)
     # risk_monte_carlo_strategy = train_risk_monte_carlo("risk_monte_carlo", 0)
@@ -234,7 +234,7 @@ def main():
     # test(benchmark2_strategy, data)
     test(optimal_strategy, data)
     # test(risk_neutral_strategy, data)
-    # test(stochastic_risk_neutral_strategy, data)
+    test(stochastic_risk_neutral_strategy, data)
     # test(variance_strategy, data)
     # test(semi_std_dev_strategy, data)
     # test(stone_strategy, data)
@@ -243,7 +243,7 @@ def main():
     # test(risk_states_strategy, data)
     # test(basic_monte_carlo_strategy, data)
     # test(reinforce_strategy_action_prob, data)
-    test(reinforce_strategy_sigmoid, data)
+    # test(reinforce_strategy_sigmoid, data)
     # test(risk_monte_carlo_strategy, data)
 
     # plot bar charts
