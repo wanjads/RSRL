@@ -98,11 +98,12 @@ def main():
 
     # train a risk neutral strategy and risk averse strategies in different variants
     risk_neutral_strategy = train("risk_neutral", 0)
-    variance_strategy = train("mean_variance", 0.3)
-    semi_std_dev_strategy = train("semi_std_deviation", 0.1)
-    stone_strategy = train("stone_measure", 0.1)
-    cvar_strategy = train("cvar", 0.05)
-    utility_strategy = train("utility_function", 0.05)
+    risk_neutral_stochastic_strategy = train("stochastic", 0)
+    # variance_strategy = train("mean_variance", 0.3)
+    # semi_std_dev_strategy = train("semi_std_deviation", 0.1)
+    # stone_strategy = train("stone_measure", 0.1)
+    # cvar_strategy = train("cvar", 0.05)
+    # utility_strategy = train("utility_function", 0.05)
 
     # test all strategies
     # data collects all costs and risks
@@ -111,11 +112,12 @@ def main():
     # test(never_strategy, data)
     test(benchmark_strategy, data)
     test(risk_neutral_strategy, data)
-    test(variance_strategy, data)
-    test(semi_std_dev_strategy, data)
-    test(stone_strategy, data)
-    test(cvar_strategy, data)
-    test(utility_strategy, data)
+    test(risk_neutral_stochastic_strategy, data)
+    # test(variance_strategy, data)
+    # test(semi_std_dev_strategy, data)
+    # test(stone_strategy, data)
+    # test(cvar_strategy, data)
+    # test(utility_strategy, data)
     # test(value_iteration, data)
 
     # plot bar charts

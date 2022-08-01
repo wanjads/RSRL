@@ -1,3 +1,4 @@
+import math
 import random
 import constants
 import numpy as np
@@ -73,7 +74,7 @@ class Strategy:
             self.qvalues[old_state.aoi_sender][old_state.aoi_receiver][action] = \
                 (1 - learning_rate) * old_q_value + learning_rate * (sd_cost + constants.gamma * V)
 
-        elif self.strategy_type == "risk_neutral":  # standard q-learning
+        elif self.strategy_type == "risk_neutral" or self.strategy_type == "stochastic":  # standard q-learning
             self.qvalues[old_state.aoi_sender][old_state.aoi_receiver][action] = \
                 (1 - learning_rate) * old_q_value + learning_rate * (cost + constants.gamma * V)
 
@@ -83,6 +84,11 @@ class Strategy:
     def action(self, state, epsilon):
         if random.random() < epsilon:
             action = random.randint(0, 1)
+        elif self.strategy_type == "stochastic":
+            q_values = self.qvalues[state.aoi_sender][state.aoi_receiver]
+            action = 0
+            if random.random() < math.exp(q_values[1]) / (math.exp(q_values[0]) + math.exp(q_values[1])):
+                action = 1
         else:
             action = np.argmin(self.qvalues[state.aoi_sender][state.aoi_receiver])
         return action
