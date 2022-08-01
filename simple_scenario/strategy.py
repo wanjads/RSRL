@@ -55,7 +55,7 @@ class Strategy:
 
         elif self.strategy_type == "mean_variance":  # own idea
             self.mean = utils.running_mean(episode_no, self.mean, cost)
-            mv_cost = cost + self.risk_factor * abs(cost - self.mean)
+            mv_cost = cost + self.risk_factor * (cost - self.mean) ** 2
             self.nn.train_model(inp, action, mv_cost)
 
         elif self.strategy_type == "stone_measure":  # own idea

@@ -154,7 +154,7 @@ def main():
     optimal_strategy = Strategy("optimal", 0)
 
     # train a risk neutral strategy and risk averse strategies in different variants
-    risk_neutral_strategy = train("risk_neutral", 0)
+    # risk_neutral_strategy = train("risk_neutral", 0)
     # stochastic_risk_neutral_strategy = train("stochastic", 0)
     # variance_strategy = train("mean_variance", 0.3)
     # semi_std_dev_strategy = train("semi_std_deviation", 0.1)
@@ -178,7 +178,7 @@ def main():
     # test(benchmark_strategy, data)
     # test(benchmark2_strategy, data)
     test(optimal_strategy, data)
-    test(risk_neutral_strategy, data)
+    # test(risk_neutral_strategy, data)
     # test(stochastic_risk_neutral_strategy, data)
     # test(variance_strategy, data)
     # test(semi_std_dev_strategy, data)
@@ -191,10 +191,10 @@ def main():
     # test(reinforce_strategy_sigmoid, data)
 
     # plot bar charts
-    utils.bar_chart(data, 'avg_cost', True)
-    utils.bar_chart(data, 'risk', False)
-    utils.bar_chart(data, 'risky_states', False)
-    utils.bar_chart(data, 'fishburn', False)
+    # utils.bar_chart(data, 'avg_cost', True)
+    # utils.bar_chart(data, 'risk', False)
+    # utils.bar_chart(data, 'risky_states', False)
+    # utils.bar_chart(data, 'fishburn', False)
 
 
 if __name__ == '__main__':
