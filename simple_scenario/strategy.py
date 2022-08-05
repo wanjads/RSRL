@@ -1,5 +1,4 @@
 import copy
-import math
 import random
 import constants
 import numpy as np
@@ -25,12 +24,6 @@ class Strategy:
             self.sorted_costs = []
         if strategy_type == "stone_measure":
             self.target = constants.energy_weight + 1
-        if strategy_type == "basic_monte_carlo":
-            self.lambda_estimate = 0.5
-            self.p_estimate = 0.5
-            self.no_of_sends = 0
-            self.last_aoi_receiver = 1
-            self.last_aoi_sender = 0
         if strategy_type == "risk_monte_carlo":
             self.penalties = np.zeros((constants.aoi_cap + 1, constants.aoi_cap + 1, 2))
         if strategy_type == "REINFORCE_action_prob":
@@ -58,7 +51,7 @@ class Strategy:
 
         elif self.strategy_type == "mean_variance":  # own idea
             self.mean = utils.running_mean(episode_no, self.mean, cost)
-            mv_cost = cost + self.risk_factor * abs(cost - self.mean)
+            mv_cost = cost + self.risk_factor * (cost - self.mean) ** 2
             self.nn.train_model(inp, action, mv_cost)
 
         elif self.strategy_type == "stone_measure":  # own idea
@@ -81,9 +74,6 @@ class Strategy:
             if state.aoi_receiver >= constants.risky_aoi:
                 risky_state_cost = self.risk_factor * cost
             self.nn.train_model(inp, action, risky_state_cost)
-
-        elif self.strategy_type == "basic_monte_carlo":  # own idea
-            self.update_estimates(state, episode_no)
 
         else:
             print("a strategy update for strategy type " + self.strategy_type + " is not implemented")
@@ -116,7 +106,7 @@ class Strategy:
             action = 0
         elif self.strategy_type == 'random':
             action = random.randint(0, 1)
-        elif self.strategy_type == 'benchmark':
+        elif self.strategy_type == 'send_once':
             action = int(state.aoi_sender == 0)
         elif self.strategy_type == 'benchmark2':
             action = 0
@@ -125,10 +115,15 @@ class Strategy:
                        + constants.new_package_prob / (1 - constants.new_package_prob) ** 2) \
                     >= constants.energy_weight:
                 action = 1
-        elif self.strategy_type == 'optimal':
+        elif self.strategy_type == 'optimal_threshold':
             action = 0
-            # TODO this is tuned for specific lambda and e, generalise this!
+            # this is tuned for lambda = 0.9, p = 0.5, e = 3
             if state.aoi_receiver - state.aoi_sender >= 2:
+                action = 1
+        elif self.strategy_type == 'threshold':
+            action = 0
+            # this is tuned for lambda = 0.9, p = 0.5, e = 3
+            if state.aoi_receiver - state.aoi_sender >= 3:
                 action = 1
         elif self.strategy_type == 'basic_monte_carlo':
             mean_wait = 0
@@ -174,7 +169,7 @@ class Strategy:
         state = copy.deepcopy(state)
         data = []
         for simulation_episode in range(length):
-            self.simulation_state_update(state, action)
+            state.update(action)
             cost = constants.energy_weight * action + state.aoi_receiver
             if simulation_type == "random":
                 action = random.randint(0, 1)
@@ -235,31 +230,3 @@ class Strategy:
                 derivatives[episode_no][1] = utils.sigmoid(self.flat * x - self.shift)
 
         return derivatives
-
-    def simulation_state_update(self, state, action):
-        state.last_action = 0
-        if action:
-            state.last_action = 1
-            if random.random() < self.lambda_estimate and state.aoi_sender < constants.aoi_cap:
-                state.aoi_receiver = state.aoi_sender
-
-        if state.aoi_receiver < constants.aoi_cap:
-            state.aoi_receiver += 1
-
-        # here begins a new iteration
-
-        if state.aoi_sender < constants.aoi_cap:
-            state.aoi_sender += 1
-        if random.random() < self.p_estimate:
-            state.aoi_sender = 0
-
-    def update_estimates(self, state, episode_no):
-        self.p_estimate = (int(state.aoi_sender == 0) + episode_no * self.p_estimate) / (episode_no + 1)
-        if state.last_action and not self.last_aoi_receiver == self.last_aoi_sender:
-            if state.aoi_receiver <= self.last_aoi_receiver:
-                self.lambda_estimate = (1 + self.no_of_sends * self.lambda_estimate) / (self.no_of_sends + 1)
-            else:
-                self.lambda_estimate = self.no_of_sends * self.lambda_estimate / (self.no_of_sends + 1)
-            self.no_of_sends += 1
-        self.last_aoi_receiver = state.aoi_receiver
-        self.last_aoi_sender = state.aoi_sender

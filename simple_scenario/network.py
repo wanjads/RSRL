@@ -24,3 +24,7 @@ class NN:
         history = self.model.fit(inp, opt, epochs=1, verbose=0)
         loss = history.history['loss'][0]
         return loss
+
+    def save_model(self):
+        self.model.save('models')
+
