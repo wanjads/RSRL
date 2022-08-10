@@ -197,7 +197,7 @@ def risk_factor_train_test(strategy, step, data):
 
 def main():
 
-    no_of_runs = 50
+    no_of_runs = 5
     data = {'strategy': [], 'avg_cost': [], 'risk': [], 'risky_states': [], 'fishburn': []}
     for random_seed in range(no_of_runs):
 
@@ -205,35 +205,42 @@ def main():
         random.seed(random_seed)
 
         # init two benchmark strategy sending never / in every episode
-        always_strategy = Strategy("always", 0)
+        # always_strategy = Strategy("always", 0)
         # never_strategy = Strategy("never", 0)
 
         # init a strategy acting uniformly random
         random_strategy = Strategy("random", 0)
 
         # init a benchmark sending, if a new package arrived
-        benchmark_strategy = Strategy("send_once", 0)
+        # benchmark_strategy = Strategy("send_once", 0)
         # init a more sophisticated benchmark
         # benchmark2_strategy = Strategy("benchmark2", 0)
         # init the threshold strategy
-        threshold_strategy = Strategy("threshold", 0)
+        # threshold_strategy = Strategy("threshold", 0)
         # init the optimal threshold strategy
         optimal_strategy = Strategy("optimal_threshold", 0)
 
         # train a risk neutral strategy and risk averse strategies in different variants
-        # risk_neutral_strategy = train("risk_neutral", 0)
+        risk_neutral_strategy = train("network_Q", 0)
         # stochastic_risk_neutral_strategy = train("stochastic", 0)
-        # variance_strategy = train("mean_variance", 0.35)
-        # semi_std_dev_strategy = train("semi_std_deviation", 0.1)
-        # stone_strategy = train("stone_measure", 0.1)
-        # cvar_strategy = train("cvar", 0.05)
-        # utility_strategy = train("utility_function", 0.05)
-        # risk_states_strategy = train("risk_states", 10)
-        basic_monte_carlo_strategy = Strategy("basic_monte_carlo", 0)
+        variance_strategy = train("mean_variance", 0.35)
+        semi_std_dev_strategy = train("semi_std_deviation", 0.1)
+        fishburn_strategy = train("fishburn", 0.1)
+        cvar_strategy = train("cvar", 0.1)
+        utility_strategy = train("utility_function", 0.05)
+        risk_states_strategy = train("risk_states", 5)
+        # basic_monte_carlo_strategy = Strategy("basic_monte_carlo", 0)
+        # old_train_eps = constants.train_episodes
+        # constants.train_episodes = 1000000
+        # tabular_strategy = train("tabular_Q", 0)
+        # constants.train_episodes = old_train_eps
+        # value_iteration = Strategy("value_iteration", 0)
 
         # reinforce_strategy_action_prob = train_reinforce("REINFORCE_action_prob", 0)
-        # TODO die gelernte sigmoid strategie ist irgendwie besser
-        # TODO als die selbe ohne vorheriges lernen mit denselben parametern
+
+        #TODO die gelernte sigmoid strategie ist irgendwie besser
+        # als die selbe ohne vorheriges lernen mit denselben parametern
+
         # reinforce_strategy_sigmoid = train_reinforce("REINFORCE_sigmoid", 0)
         # reinforce_strategy_action_prob = Strategy("REINFORCE_action_prob", 0)
         # reinforce_strategy_sigmoid = Strategy("REINFORCE_sigmoid", 0)
@@ -241,25 +248,31 @@ def main():
 
         # test all strategies
         # data collects all costs and risks
-        test(always_strategy, data, random_seed, no_of_runs)
+        # test(always_strategy, data, random_seed, no_of_runs)
         # test(never_strategy, data, random_seed, no_of_runs)
         test(random_strategy, data, random_seed, no_of_runs)
-        test(benchmark_strategy, data, random_seed, no_of_runs)
+        # test(benchmark_strategy, data, random_seed, no_of_runs)
         # test(benchmark2_strategy, data, random_seed, no_of_runs)
-        test(threshold_strategy, data, random_seed, no_of_runs)
+        # test(threshold_strategy, data, random_seed, no_of_runs)
         test(optimal_strategy, data, random_seed, no_of_runs)
-        # test(risk_neutral_strategy, data, random_seed, no_of_runs)
+        test(risk_neutral_strategy, data, random_seed, no_of_runs)
         # test(stochastic_risk_neutral_strategy, data, random_seed, no_of_runs)
-        # test(variance_strategy, data, random_seed, no_of_runs)
-        # test(semi_std_dev_strategy, data, random_seed, no_of_runs)
-        # test(stone_strategy, data, random_seed, no_of_runs)
-        # test(cvar_strategy, data, random_seed, no_of_runs)
-        # test(utility_strategy, data, random_seed, no_of_runs)
-        # test(risk_states_strategy, data, random_seed, no_of_runs)
-        test(basic_monte_carlo_strategy, data, random_seed, no_of_runs)
+        test(variance_strategy, data, random_seed, no_of_runs)
+        test(semi_std_dev_strategy, data, random_seed, no_of_runs)
+        test(fishburn_strategy, data, random_seed, no_of_runs)
+        test(cvar_strategy, data, random_seed, no_of_runs)
+        test(utility_strategy, data, random_seed, no_of_runs)
+        test(risk_states_strategy, data, random_seed, no_of_runs)
+        # test(basic_monte_carlo_strategy, data, random_seed, no_of_runs)
         # test(reinforce_strategy_action_prob, data, random_seed, no_of_runs)
         # test(reinforce_strategy_sigmoid, data, random_seed, no_of_runs)
         # test(risk_monte_carlo_strategy, data, random_seed, no_of_runs)
+        # test(tabular_strategy, data, random_seed, no_of_runs)
+        # test(value_iteration, data, random_seed, no_of_runs)
+
+    # round values in data
+    for i in range(1, len(data)):
+        data[list(data.keys())[i]] = list(map(lambda x: round(x, 4), data[list(data.keys())[i]]))
 
     # plot bar charts
     utils.bar_chart(data, 'avg_cost', True)

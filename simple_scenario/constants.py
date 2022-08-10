@@ -9,7 +9,7 @@ gamma = 0.7                                                                     
 epsilon_0 = 0.9                                                                     # for eps-greedy policy
 decay = 0.999                                                                       # decay factor for epsilon
 
-aoi_cap = 100
+aoi_cap = 10
 
 risky_aoi = 10
 
@@ -18,7 +18,7 @@ basic_monte_carlo_simulation_length = 5
 
 
 reinforce_rollout_length = 300                                                        # batches = eps/rrl
-no_train_trajectories = 10000
+no_train_trajectories = 10  # 10000
 
 risk_monte_carlo_rollout_length = 10
 risk_monte_carlo_trajectories = 10000000

@@ -22,7 +22,7 @@ class Strategy:
             self.mean = 0
         if strategy_type == "cvar":
             self.sorted_costs = []
-        if strategy_type == "stone_measure":
+        if strategy_type == "fishburn":
             self.target = constants.energy_weight + 1
         if strategy_type == "risk_monte_carlo":
             self.penalties = np.zeros((constants.aoi_cap + 1, constants.aoi_cap + 1, 2))
@@ -31,6 +31,12 @@ class Strategy:
         if strategy_type == "REINFORCE_sigmoid":
             self.flat = 5.3219222624013645
             self.shift = 8.352662521479429
+        if strategy_type == "tabular_Q":
+            self.qvalues = np.zeros((constants.aoi_cap + 1, constants.aoi_cap + 1, 2))
+            self.learning_rate = 0.01
+        if strategy_type == "value_iteration":
+            self.qvalues = np.zeros((constants.aoi_cap + 1, constants.aoi_cap + 1, 2))
+            self.value_iteration()
 
     # the tabular q-learning update dependent on risk sensitivity
     def update(self, old_state, state, action, episode_no):
@@ -46,7 +52,7 @@ class Strategy:
         elif self.strategy_type == "cvar":  # see zhou et al.
             bisect.insort(self.sorted_costs, cost)
             risk = utils.cvar_risk(self.sorted_costs, self.risk_factor)
-            cvar_cost = cost + 1 * risk  # mu seems to be irrelevant
+            cvar_cost = cost + 1 * risk  # risk factor mu seems to be irrelevant
             self.nn.train_model(inp, action, cvar_cost)
 
         elif self.strategy_type == "mean_variance":  # own idea
@@ -54,8 +60,11 @@ class Strategy:
             mv_cost = cost + self.risk_factor * (cost - self.mean) ** 2
             self.nn.train_model(inp, action, mv_cost)
 
-        elif self.strategy_type == "stone_measure":  # own idea
-            stone_cost = cost + self.risk_factor * (cost - self.target) ** 2
+        elif self.strategy_type == "fishburn":  # own idea
+            if cost < self.target:
+                stone_cost = cost
+            else:
+                stone_cost = cost + self.risk_factor * (cost - self.target)
             self.nn.train_model(inp, action, stone_cost)
 
         elif self.strategy_type == "semi_std_deviation":  # own idea
@@ -63,10 +72,10 @@ class Strategy:
             if cost < self.mean:
                 sd_cost = cost
             else:
-                sd_cost = cost + self.risk_factor * (cost - self.mean) ** 2
+                sd_cost = cost + self.risk_factor * (cost - self.mean)
             self.nn.train_model(inp, action, sd_cost)
 
-        elif self.strategy_type == "risk_neutral" or self.strategy_type == "stochastic":  # standard q-learning
+        elif self.strategy_type == "network_Q" or self.strategy_type == "stochastic":  # standard q-learning
             self.nn.train_model(inp, action, cost)
 
         elif self.strategy_type == "risk_states":  # own idea
@@ -74,6 +83,12 @@ class Strategy:
             if state.aoi_receiver >= constants.risky_aoi:
                 risky_state_cost = self.risk_factor * cost
             self.nn.train_model(inp, action, risky_state_cost)
+
+        elif self.strategy_type == "tabular_Q":  # tabular q-learning
+            V = np.min(self.qvalues[state.aoi_sender][state.aoi_receiver])
+            old_q_value = self.qvalues[old_state.aoi_sender][old_state.aoi_receiver][action]
+            self.qvalues[old_state.aoi_sender][old_state.aoi_receiver][action] = \
+                (1 - self.learning_rate) * old_q_value + self.learning_rate * (cost + constants.gamma * V)
 
         else:
             print("a strategy update for strategy type " + self.strategy_type + " is not implemented")
@@ -154,6 +169,12 @@ class Strategy:
             action = np.random.choice([0, 1], p=action_probs)
         elif random.random() < epsilon:
             action = random.randint(0, 1)
+        elif self.strategy_type == 'tabular_Q' or self.strategy_type == 'value_iteration':
+            if self.qvalues[state.aoi_sender][state.aoi_receiver][0] == \
+                    self.qvalues[state.aoi_sender][state.aoi_receiver][1]:
+                action = random.randint(0, 1)
+            else:
+                action = np.argmin(self.qvalues[state.aoi_sender][state.aoi_receiver])
         elif self.strategy_type == 'stochastic':
             action = 0
             out = self.nn.out(state.as_input())[0]
@@ -230,3 +251,48 @@ class Strategy:
                 derivatives[episode_no][1] = utils.sigmoid(self.flat * x - self.shift)
 
         return derivatives
+
+    def value_iteration(self):
+
+        vvalues = np.zeros((constants.aoi_cap + 1, constants.aoi_cap + 1))
+        qvalues = np.zeros((constants.aoi_cap + 1, constants.aoi_cap + 1, 2))
+
+        eps = 5
+        aoi_cap = 10
+        for iteration in range(eps):
+            for aois in range(aoi_cap + 1):
+                print(aois + 100 * iteration)
+                for aoir in range(aoi_cap + 1):
+                    for action in range(2):
+                        summe = 0
+                        p_summe = 0
+                        for aois2 in range(aoi_cap + 1):
+                            for aoir2 in range(aoi_cap + 1):
+                                if not action:
+                                    p = constants.new_package_prob * \
+                                        (aois2 == 0 and (aoir2 == aoir + 1 or aoir2 == aoi_cap == aoir)) \
+                                        + (1 - constants.new_package_prob) * \
+                                        ((aois2 == aois + 1 or aois2 == aoi_cap == aois) and
+                                         (aoir2 == aoir + 1 or aoir2 == aoi_cap == aoir))
+                                    r = aoir2
+                                else:
+                                    p = constants.new_package_prob * constants.send_prob * \
+                                        (aois2 == 0 and (aoir2 == aois + 1 or aoir2 == aoi_cap == aois)) \
+                                        + constants.new_package_prob * (1 - constants.send_prob) * \
+                                        (aois2 == 0 and (aoir2 == aoir + 1 or aoir2 == aoi_cap == aoir)) \
+                                        + (1 - constants.new_package_prob) * constants.send_prob * \
+                                        ((aois2 == aois + 1 or aois2 == aoi_cap == aois) and
+                                         (aoir2 == aois + 1 or aoir2 == aoi_cap == aois)) \
+                                        + (1 - constants.new_package_prob) * (1 - constants.send_prob) * \
+                                        ((aois2 == aois + 1 or aois2 == aoi_cap == aois) and
+                                         (aoir2 == aoir + 1 or aoir2 == aoi_cap == aoir))
+                                    r = aoir2 + constants.energy_weight
+                                summe += p * (r + constants.gamma * vvalues[aois2][aoir2])
+                                p_summe += p
+                        qvalues[aois][aoir][action] = summe
+                    vvalues[aois][aoir] = np.min(qvalues[aois][aoir])
+
+        for aois in range(constants.aoi_cap + 1):
+            for aoir in range(constants.aoi_cap + 1):
+                self.qvalues[aois][aoir][0] = qvalues[aois][aoir][0]
+                self.qvalues[aois][aoir][1] = qvalues[aois][aoir][1]

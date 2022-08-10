@@ -92,14 +92,15 @@ def bar_chart(data, title, rev):
     data = {'strategy': list(data), title: list(zip(*data.values()))[0]}
 
     df = pd.DataFrame(data)
-    fig = px.bar(df, x='strategy', y=title, color='strategy', color_discrete_sequence=colors,
+    fig = px.bar(df, x='strategy', y=title, color='strategy', color_discrete_sequence=colors, text=title,
                  title=title + '\t \t \t \t'
                              + 'p: ' + str(constants.new_package_prob)
                              + ', lambda: ' + str(constants.send_prob)
                              + ', energy weight: ' + str(constants.energy_weight)
-                             + '\t \t \t \t'
-                             + 'train eps: ' + str(constants.train_episodes)
-                             + ', test eps: ' + str(constants.test_episodes))
+                             + '\t \t \t \t'  # + 'train eps: ' + str(constants.train_episodes) + ', '
+                             + ' test eps: ' + str(constants.test_episodes))
+    fig.update_layout(font=dict(size=24))
+    fig.update_traces(textfont_size=30)
     fig.show()
 
 
