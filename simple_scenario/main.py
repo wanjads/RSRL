@@ -77,11 +77,11 @@ def train_reinforce(strategy_type, risk_factor):
         if trajectory_no % int(0.2 * constants.no_train_trajectories) == 0:
             print(str(int(trajectory_no / constants.no_train_trajectories * 100)) + " %")
 
-    if strategy_type == "REINFORCE_sigmoid":
-        utils.line_plot(parameters[0])
-        utils.line_plot(parameters[1])
-    elif strategy_type == "REINFORCE_action_prob":
-        utils.line_plot(parameters[0])
+    # if strategy_type == "REINFORCE_sigmoid":
+    #     utils.line_plot(parameters[0])
+    #     utils.line_plot(parameters[1])
+    # elif strategy_type == "REINFORCE_action_prob":
+    #     utils.line_plot(parameters[0])
 
     print("100 %")
     print("---------- TRAINING COMPLETE ----------")
@@ -143,7 +143,7 @@ def test(strategy, data, run, no_of_runs):
 
 def main():
 
-    no_of_runs = 100
+    no_of_runs = 1
     # data collects all costs and risks
     data = {'strategy': [], 'avg_cost': [], 'risk': [], 'risky_states': [], 'fishburn': []}
     for random_seed in range(no_of_runs):
@@ -152,20 +152,20 @@ def main():
         random.seed(random_seed)
 
         # non-learning strategies
-        # always = Strategy("always", 0)
+        always = Strategy("always", 0)
         # never = Strategy("never", 0)
         rand = Strategy("random", 0)
-        # send_once = Strategy("send_once", 0)
-        # threshold = Strategy("threshold", 0)
+        send_once = Strategy("send_once", 0)
+        threshold = Strategy("threshold", 0)
         optimal_threshold = Strategy("optimal_threshold", 0)
         # basic_monte_carlo = Strategy("basic_monte_carlo", 0)
 
         # risk-neutral learning strategies
         # value_iteration = Strategy("value_iteration", 0)
-        # tabular_Q = train("tabular_Q", 0, 100000)
+        tabular_Q = train("tabular_Q", 0, 100000)
         # network_Q = train("network_Q", 0, 1000)
-        # reinforce_action_prob = train_reinforce("REINFORCE_action_prob", 0)
-        # reinforce_sigmoid = train_reinforce("REINFORCE_sigmoid", 0)
+        reinforce_action_prob = train_reinforce("REINFORCE_action_prob", 0)
+        reinforce_sigmoid = train_reinforce("REINFORCE_sigmoid", 0)
 
         # risk-sensitive tabular strategies
         # mean_variance_tabular = train("mean_variance_tabular", 0.5, 100000)
@@ -185,20 +185,20 @@ def main():
 
         # test all strategies
         # non-learning strategies
-        # test(always, data, random_seed, no_of_runs)
+        test(always, data, random_seed, no_of_runs)
         # test(never, data, random_seed, no_of_runs)
         test(rand, data, random_seed, no_of_runs)
-        # test(send_once, data, random_seed, no_of_runs)
-        # test(threshold, data, random_seed, no_of_runs)
+        test(send_once, data, random_seed, no_of_runs)
+        test(threshold, data, random_seed, no_of_runs)
         test(optimal_threshold, data, random_seed, no_of_runs)
         # test(basic_monte_carlo, data, random_seed, no_of_runs)
 
         # risk-neutral learning strategies
         # test(value_iteration, data, random_seed, no_of_runs)
-        # test(tabular_Q, data, random_seed, no_of_runs)
+        test(tabular_Q, data, random_seed, no_of_runs)
         # test(network_Q, data, random_seed, no_of_runs)
-        # test(reinforce_action_prob, data, random_seed, no_of_runs)
-        # test(reinforce_sigmoid, data, random_seed, no_of_runs)
+        test(reinforce_action_prob, data, random_seed, no_of_runs)
+        test(reinforce_sigmoid, data, random_seed, no_of_runs)
 
         # risk-sensitive tabular strategies
         # test(mean_variance_tabular, data, random_seed, no_of_runs)

@@ -101,7 +101,9 @@ def bar_chart(data, title, rev):
                              + ' test eps: ' + str(constants.test_episodes))
     fig.update_layout(font=dict(size=24))
     fig.update_traces(textfont_size=30)
-    fig.show()
+    # fig.show()
+    fig.update_layout(autosize=False, width=1904, height=931)
+    fig.write_image("results/" + title + ".png")
 
 
 def sigmoid(x):
