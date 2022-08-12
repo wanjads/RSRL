@@ -162,10 +162,10 @@ def main():
 
         # risk-neutral learning strategies
         # value_iteration = Strategy("value_iteration", 0)
-        # tabular_Q = train("tabular_Q", 0, 100000)
+        tabular_Q = train("tabular_Q", 0, 100000)
         network_Q = train("network_Q", 0, 1000)
-        # reinforce_action_prob = train_reinforce("REINFORCE_action_prob", 0)
-        # reinforce_sigmoid = train_reinforce("REINFORCE_sigmoid", 0)
+        reinforce_action_prob = train_reinforce("REINFORCE_action_prob", 0)
+        reinforce_sigmoid = train_reinforce("REINFORCE_sigmoid", 0)
 
         # risk-sensitive tabular strategies
         # mean_variance_tabular = train("mean_variance_tabular", 0.5, 100000)
@@ -176,12 +176,12 @@ def main():
         # risk_states_tabular = train("risk_states_tabular", 2, 100000)
 
         # risk-sensitive network based strategies
-        mean_variance_network = train("mean_variance_network", 0.25, 1000)
-        semi_std_dev_network = train("semi_std_deviation_network", 0.5, 1000)
-        fishburn_network = train("fishburn_network", 0.5, 1000)
-        cvar_network = train("cvar_network", 0.5, 1000)
-        utility_network = train("utility_function_network", 0.0475, 1000)
-        risk_states_network = train("risk_states_network", 2, 1000)
+        # mean_variance_network = train("mean_variance_network", 0.25, 1000)
+        # semi_std_dev_network = train("semi_std_deviation_network", 0.5, 1000)
+        # fishburn_network = train("fishburn_network", 0.5, 1000)
+        # cvar_network = train("cvar_network", 0.5, 1000)
+        # utility_network = train("utility_function_network", 0.0475, 1000)
+        # risk_states_network = train("risk_states_network", 2, 1000)
 
         # test all strategies
         # non-learning strategies
@@ -195,10 +195,10 @@ def main():
 
         # risk-neutral learning strategies
         # test(value_iteration, data, random_seed, no_of_runs)
-        # test(tabular_Q, data, random_seed, no_of_runs)
+        test(tabular_Q, data, random_seed, no_of_runs)
         test(network_Q, data, random_seed, no_of_runs)
-        # test(reinforce_action_prob, data, random_seed, no_of_runs)
-        # test(reinforce_sigmoid, data, random_seed, no_of_runs)
+        test(reinforce_action_prob, data, random_seed, no_of_runs)
+        test(reinforce_sigmoid, data, random_seed, no_of_runs)
 
         # risk-sensitive tabular strategies
         # test(mean_variance_tabular, data, random_seed, no_of_runs)
@@ -209,12 +209,12 @@ def main():
         # test(risk_states_tabular, data, random_seed, no_of_runs)
 
         # risk-sensitive network based strategies
-        test(mean_variance_network, data, random_seed, no_of_runs)
-        test(semi_std_dev_network, data, random_seed, no_of_runs)
-        test(fishburn_network, data, random_seed, no_of_runs)
-        test(cvar_network, data, random_seed, no_of_runs)
-        test(utility_network, data, random_seed, no_of_runs)
-        test(risk_states_network, data, random_seed, no_of_runs)
+        # test(mean_variance_network, data, random_seed, no_of_runs)
+        # test(semi_std_dev_network, data, random_seed, no_of_runs)
+        # test(fishburn_network, data, random_seed, no_of_runs)
+        # test(cvar_network, data, random_seed, no_of_runs)
+        # test(utility_network, data, random_seed, no_of_runs)
+        # test(risk_states_network, data, random_seed, no_of_runs)
 
     # round values in data
     for i in range(1, len(data)):

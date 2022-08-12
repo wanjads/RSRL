@@ -103,7 +103,7 @@ def bar_chart(data, title, rev):
     fig.update_traces(textfont_size=30)
     # fig.show()
     fig.update_layout(autosize=False, width=1904, height=931)
-    fig.write_image("results/" + title + ".png")
+    fig.write_image("results/rn" + title + ".png")
 
 
 def sigmoid(x):
