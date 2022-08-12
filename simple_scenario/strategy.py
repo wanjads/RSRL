@@ -51,8 +51,8 @@ class Strategy:
         # zhou et al. only use the cost from aoi but in this context using the general cost makes more sense
         elif self.strategy_type == "cvar":  # see zhou et al.
             bisect.insort(self.sorted_costs, cost)
-            risk = utils.cvar_risk(self.sorted_costs, self.risk_factor)
-            cvar_cost = cost + 1 * risk  # risk factor mu seems to be irrelevant
+            risk = utils.cvar_risk(self.sorted_costs, 0.1)
+            cvar_cost = cost + self.risk_factor * risk
             self.nn.train_model(inp, action, cvar_cost)
 
         elif self.strategy_type == "mean_variance":  # own idea

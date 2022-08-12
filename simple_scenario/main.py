@@ -197,6 +197,8 @@ def risk_factor_train_test(strategy, step, data):
 
 def main():
 
+    # for risk_factor in [0.045, 0.0475, 0.05, 0.0525, 0.055]:
+    # print("risk_factor: " + str(risk_factor))
     no_of_runs = 5
     data = {'strategy': [], 'avg_cost': [], 'risk': [], 'risky_states': [], 'fishburn': []}
     for random_seed in range(no_of_runs):
@@ -223,12 +225,12 @@ def main():
         # train a risk neutral strategy and risk averse strategies in different variants
         risk_neutral_strategy = train("network_Q", 0)
         # stochastic_risk_neutral_strategy = train("stochastic", 0)
-        variance_strategy = train("mean_variance", 0.35)
-        semi_std_dev_strategy = train("semi_std_deviation", 0.1)
-        fishburn_strategy = train("fishburn", 0.1)
-        cvar_strategy = train("cvar", 0.1)
-        utility_strategy = train("utility_function", 0.05)
-        risk_states_strategy = train("risk_states", 5)
+        variance_strategy = train("mean_variance", 0.25)
+        semi_std_dev_strategy = train("semi_std_deviation", 0.5)
+        fishburn_strategy = train("fishburn", 0.5)
+        cvar_strategy = train("cvar", 0.5)
+        utility_strategy = train("utility_function", 0.0475)
+        risk_states_strategy = train("risk_states", 2)
         # basic_monte_carlo_strategy = Strategy("basic_monte_carlo", 0)
         # old_train_eps = constants.train_episodes
         # constants.train_episodes = 1000000
