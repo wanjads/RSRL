@@ -104,21 +104,6 @@ def bar_chart(data, title, rev):
     fig.show()
 
 
-def risk_factor_cost_bar_chart(data, step, title):
-
-    data = {'risk_factor': np.arange(0, 10 * step, step), 'cost': data['avg_cost']}
-    df = pd.DataFrame(data)
-    fig = px.bar(df, x='risk_factor', y='cost', title=title)
-    fig.show()
-
-
-def risk_factor_risk_bar_chart(data, step, title):
-    data = {'risk_factor': np.arange(0, 10 * step, step), 'risk': data['risk']}
-    df = pd.DataFrame(data)
-    fig = px.bar(df, x='risk_factor', y='risk', title=title)
-    fig.show()
-
-
 def sigmoid(x):
     return 1 / (1 + math.exp(-x))
 

@@ -12,7 +12,7 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
 
 # train a strategy using (risk-sens.) eps-greedy q-learning
-def train(strategy_type, risk_factor):
+def train(strategy_type, risk_factor, train_episodes):
     print("----------    TRAIN MODEL    ----------")
     print("strategy type: " + strategy_type)
 
@@ -20,7 +20,7 @@ def train(strategy_type, risk_factor):
     strategy = Strategy(strategy_type, risk_factor)
 
     epsilon = constants.epsilon_0
-    for episode_no in range(constants.train_episodes):
+    for episode_no in range(train_episodes):
 
         old_state = copy.deepcopy(state)
         action = strategy.action(state, epsilon)
@@ -30,8 +30,8 @@ def train(strategy_type, risk_factor):
 
         strategy.update(old_state, state, action, episode_no)
 
-        if episode_no % int(0.2 * constants.train_episodes) == 0:
-            print(str(int(episode_no / constants.train_episodes * 100)) + " %")
+        if episode_no % int(0.2 * train_episodes) == 0:
+            print(str(int(episode_no / train_episodes * 100)) + " %")
 
     print("100 %")
     print("---------- TRAINING COMPLETE ----------")
@@ -82,50 +82,6 @@ def train_reinforce(strategy_type, risk_factor):
         utils.line_plot(parameters[1])
     elif strategy_type == "REINFORCE_action_prob":
         utils.line_plot(parameters[0])
-
-    print("100 %")
-    print("---------- TRAINING COMPLETE ----------")
-    print()
-
-    return strategy
-
-
-def train_risk_monte_carlo(strategy_type, risk_factor):
-
-    print("----------    TRAIN MODEL    ----------")
-    print("strategy type: " + strategy_type)
-
-    strategy = Strategy(strategy_type, risk_factor)
-    initial_aoi = [0, 0]
-
-    for trajectory_no in range(constants.risk_monte_carlo_trajectories):
-
-        state = State(initial_aoi[0], initial_aoi[1], 0)
-        costs = np.zeros(constants.risk_monte_carlo_rollout_length)
-
-        for episode_no in range(constants.risk_monte_carlo_rollout_length):
-
-            if episode_no > 0:
-                action = strategy.action(state, 0)
-            else:
-                action = trajectory_no % 2
-            state.update(action)
-
-            costs[episode_no] = state.aoi_receiver + constants.energy_weight * action
-
-        strategy.update_risk_monte_carlo(State(initial_aoi[0], initial_aoi[1], 0), trajectory_no % 2, costs)
-
-        if trajectory_no % 2 == 1:
-            initial_aoi[0] += 1
-            if initial_aoi[0] > constants.aoi_cap:
-                initial_aoi[0] = 0
-                initial_aoi[1] += 1
-            if initial_aoi[1] > constants.aoi_cap:
-                initial_aoi[0] = 0
-                initial_aoi[1] = 0
-
-        if trajectory_no % int(0.2 * constants.risk_monte_carlo_trajectories) == 0:
-            print(str(int(trajectory_no / constants.risk_monte_carlo_trajectories * 100)) + " %")
 
     print("100 %")
     print("---------- TRAINING COMPLETE ----------")
@@ -185,92 +141,80 @@ def test(strategy, data, run, no_of_runs):
         data['fishburn'][index] += fishburn_risk/no_of_runs
 
 
-def risk_factor_train_test(strategy, step, data):
-    strategies = []
-    for risk in range(10):
-        strategies += [train(strategy, step * risk)]
-    for strategy in strategies:
-        test(strategy, data)
-    utils.risk_factor_cost_bar_chart(data, step, strategy.strategy_type)
-    utils.risk_factor_risk_bar_chart(data, step, strategy.strategy_type)
-
-
 def main():
 
-    # for risk_factor in [0.045, 0.0475, 0.05, 0.0525, 0.055]:
-    # print("risk_factor: " + str(risk_factor))
-    no_of_runs = 5
+    no_of_runs = 100
+    # data collects all costs and risks
     data = {'strategy': [], 'avg_cost': [], 'risk': [], 'risky_states': [], 'fishburn': []}
     for random_seed in range(no_of_runs):
 
         # set a random seed for reproducibility
         random.seed(random_seed)
 
-        # init two benchmark strategy sending never / in every episode
-        # always_strategy = Strategy("always", 0)
-        # never_strategy = Strategy("never", 0)
+        # non-learning strategies
+        # always = Strategy("always", 0)
+        # never = Strategy("never", 0)
+        rand = Strategy("random", 0)
+        # send_once = Strategy("send_once", 0)
+        # threshold = Strategy("threshold", 0)
+        optimal_threshold = Strategy("optimal_threshold", 0)
+        # basic_monte_carlo = Strategy("basic_monte_carlo", 0)
 
-        # init a strategy acting uniformly random
-        random_strategy = Strategy("random", 0)
-
-        # init a benchmark sending, if a new package arrived
-        # benchmark_strategy = Strategy("send_once", 0)
-        # init a more sophisticated benchmark
-        # benchmark2_strategy = Strategy("benchmark2", 0)
-        # init the threshold strategy
-        # threshold_strategy = Strategy("threshold", 0)
-        # init the optimal threshold strategy
-        optimal_strategy = Strategy("optimal_threshold", 0)
-
-        # train a risk neutral strategy and risk averse strategies in different variants
-        risk_neutral_strategy = train("network_Q", 0)
-        # stochastic_risk_neutral_strategy = train("stochastic", 0)
-        variance_strategy = train("mean_variance", 0.25)
-        semi_std_dev_strategy = train("semi_std_deviation", 0.5)
-        fishburn_strategy = train("fishburn", 0.5)
-        cvar_strategy = train("cvar", 0.5)
-        utility_strategy = train("utility_function", 0.0475)
-        risk_states_strategy = train("risk_states", 2)
-        # basic_monte_carlo_strategy = Strategy("basic_monte_carlo", 0)
-        # old_train_eps = constants.train_episodes
-        # constants.train_episodes = 1000000
-        # tabular_strategy = train("tabular_Q", 0)
-        # constants.train_episodes = old_train_eps
+        # risk-neutral learning strategies
         # value_iteration = Strategy("value_iteration", 0)
+        # tabular_Q = train("tabular_Q", 0, 100000)
+        # network_Q = train("network_Q", 0, 1000)
+        # reinforce_action_prob = train_reinforce("REINFORCE_action_prob", 0)
+        # reinforce_sigmoid = train_reinforce("REINFORCE_sigmoid", 0)
 
-        # reinforce_strategy_action_prob = train_reinforce("REINFORCE_action_prob", 0)
+        # risk-sensitive tabular strategies
+        # mean_variance_tabular = train("mean_variance_tabular", 0.5, 100000)
+        # semi_std_dev_tabular = train("semi_std_deviation_tabular", 1, 100000)
+        # fishburn_tabular = train("fishburn_tabular", 1, 100000)
+        # cvar_tabular = train("cvar_tabular", 0.75, 100000)
+        # utility_tabular = train("utility_function_tabular", 0.05, 100000)
+        # risk_states_tabular = train("risk_states_tabular", 2, 100000)
 
-        #TODO die gelernte sigmoid strategie ist irgendwie besser
-        # als die selbe ohne vorheriges lernen mit denselben parametern
-
-        # reinforce_strategy_sigmoid = train_reinforce("REINFORCE_sigmoid", 0)
-        # reinforce_strategy_action_prob = Strategy("REINFORCE_action_prob", 0)
-        # reinforce_strategy_sigmoid = Strategy("REINFORCE_sigmoid", 0)
-        # risk_monte_carlo_strategy = train_risk_monte_carlo("risk_monte_carlo", 0)
+        # risk-sensitive network based strategies
+        # mean_variance_network = train("mean_variance_network", 0.25, 1000)
+        # semi_std_dev_network = train("semi_std_deviation_network", 0.5, 1000)
+        # fishburn_network = train("fishburn_network", 0.5, 1000)
+        # cvar_network = train("cvar_network", 0.5, 1000)
+        # utility_network = train("utility_function_network", 0.0475, 1000)
+        # risk_states_network = train("risk_states_network", 2, 1000)
 
         # test all strategies
-        # data collects all costs and risks
-        # test(always_strategy, data, random_seed, no_of_runs)
-        # test(never_strategy, data, random_seed, no_of_runs)
-        test(random_strategy, data, random_seed, no_of_runs)
-        # test(benchmark_strategy, data, random_seed, no_of_runs)
-        # test(benchmark2_strategy, data, random_seed, no_of_runs)
-        # test(threshold_strategy, data, random_seed, no_of_runs)
-        test(optimal_strategy, data, random_seed, no_of_runs)
-        test(risk_neutral_strategy, data, random_seed, no_of_runs)
-        # test(stochastic_risk_neutral_strategy, data, random_seed, no_of_runs)
-        test(variance_strategy, data, random_seed, no_of_runs)
-        test(semi_std_dev_strategy, data, random_seed, no_of_runs)
-        test(fishburn_strategy, data, random_seed, no_of_runs)
-        test(cvar_strategy, data, random_seed, no_of_runs)
-        test(utility_strategy, data, random_seed, no_of_runs)
-        test(risk_states_strategy, data, random_seed, no_of_runs)
-        # test(basic_monte_carlo_strategy, data, random_seed, no_of_runs)
-        # test(reinforce_strategy_action_prob, data, random_seed, no_of_runs)
-        # test(reinforce_strategy_sigmoid, data, random_seed, no_of_runs)
-        # test(risk_monte_carlo_strategy, data, random_seed, no_of_runs)
-        # test(tabular_strategy, data, random_seed, no_of_runs)
+        # non-learning strategies
+        # test(always, data, random_seed, no_of_runs)
+        # test(never, data, random_seed, no_of_runs)
+        test(rand, data, random_seed, no_of_runs)
+        # test(send_once, data, random_seed, no_of_runs)
+        # test(threshold, data, random_seed, no_of_runs)
+        test(optimal_threshold, data, random_seed, no_of_runs)
+        # test(basic_monte_carlo, data, random_seed, no_of_runs)
+
+        # risk-neutral learning strategies
         # test(value_iteration, data, random_seed, no_of_runs)
+        # test(tabular_Q, data, random_seed, no_of_runs)
+        # test(network_Q, data, random_seed, no_of_runs)
+        # test(reinforce_action_prob, data, random_seed, no_of_runs)
+        # test(reinforce_sigmoid, data, random_seed, no_of_runs)
+
+        # risk-sensitive tabular strategies
+        # test(mean_variance_tabular, data, random_seed, no_of_runs)
+        # test(semi_std_dev_tabular, data, random_seed, no_of_runs)
+        # test(fishburn_tabular, data, random_seed, no_of_runs)
+        # test(cvar_tabular, data, random_seed, no_of_runs)
+        # test(utility_tabular, data, random_seed, no_of_runs)
+        # test(risk_states_tabular, data, random_seed, no_of_runs)
+
+        # risk-sensitive network based strategies
+        # test(mean_variance_network, data, random_seed, no_of_runs)
+        # test(semi_std_dev_network, data, random_seed, no_of_runs)
+        # test(fishburn_network, data, random_seed, no_of_runs)
+        # test(cvar_network, data, random_seed, no_of_runs)
+        # test(utility_network, data, random_seed, no_of_runs)
+        # test(risk_states_network, data, random_seed, no_of_runs)
 
     # round values in data
     for i in range(1, len(data)):
