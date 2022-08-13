@@ -146,7 +146,7 @@ def test(strategy, data, run, no_of_runs):
 
 def main():
 
-    for experiment in ["network"]:  # "non-learning", "risk-neutral", "tabular",
+    for experiment in ["tabular"]:  # "non-learning", "risk-neutral", "tabular", "network"
 
         print(experiment)
 
