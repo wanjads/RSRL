@@ -1,3 +1,6 @@
+tabular_learning_eps = 1000000
+network_learning_eps = 1000
+
 test_episodes = 10000
 new_package_prob = 0.5
 send_prob = 0.9

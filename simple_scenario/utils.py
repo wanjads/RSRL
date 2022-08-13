@@ -29,6 +29,26 @@ def cvar_risk(sorted_costs, risk_factor):
     return cvar
 
 
+def running_cvar_risk(sorted_costs, quantile, cost, cvar_sum):
+    index = int((1 - quantile) * len(sorted_costs))
+    index_old = int((1-quantile) * (len(sorted_costs) - 1))
+    leng = len(sorted_costs) - index
+    if leng > 0:
+        if cost < sorted_costs[index]:
+            if index == index_old:
+                cvar_sum += sorted_costs[index]
+        else:
+            if index == index_old:
+                cvar_sum += cost
+            else:
+                cvar_sum += cost - sorted_costs[index-1]
+        cvar = cvar_sum / leng
+    else:
+        cvar = 0
+
+    return cvar, cvar_sum
+
+
 # compute running mean
 def running_mean(episode_no, m, new_cost):
     return (episode_no / (episode_no + 1)) * m + (1 / (episode_no + 1)) * new_cost

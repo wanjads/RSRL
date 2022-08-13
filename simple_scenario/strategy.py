@@ -14,6 +14,7 @@ class Strategy:
         self.strategy_type = strategy_type
         self.risk_factor = risk_factor
         self.mean = 0
+        self.cvar_sum = 0
         self.sorted_costs = []
         self.target = constants.energy_weight + 1
 
@@ -33,6 +34,8 @@ class Strategy:
                                   'risk_states_tabular']:
             self.qvalues = np.zeros((constants.aoi_cap + 1, constants.aoi_cap + 1, 2))
             self.learning_rate = 0.01
+        if strategy_type == "cvar_tabular" or strategy_type == "cvar_network":
+            self.quantile = 0.1
 
     # the tabular q-learning update dependent on risk sensitivity
     def update(self, old_state, state, action, episode_no):
@@ -65,7 +68,7 @@ class Strategy:
             # zhou et al. only use the cost from aoi but in this context using the general cost makes more sense
             elif self.strategy_type == "cvar_tabular":  # see zhou et al.
                 bisect.insort(self.sorted_costs, cost)
-                risk = utils.cvar_risk(self.sorted_costs, 0.1)
+                risk, self.cvar_sum = utils.running_cvar_risk(self.sorted_costs, self.quantile, cost, self.cvar_sum)
                 cost = cost + self.risk_factor * risk
 
             elif self.strategy_type == "utility_function_tabular":  # see shen et al. p.9 eq (13) for tabular version

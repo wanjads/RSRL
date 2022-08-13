@@ -183,8 +183,8 @@ def main():
                 rand = Strategy("random", 0)
                 optimal_threshold = Strategy("optimal_threshold", 0)
                 # value_iteration = Strategy("value_iteration", 0)
-                tabular_Q = train("tabular_Q", 0, 1000000)
-                network_Q = train("network_Q", 0, 1000)
+                tabular_Q = train("tabular_Q", 0, constants.tabular_learning_eps)
+                network_Q = train("network_Q", 0, constants.network_learning_eps)
                 reinforce_action_prob = train_reinforce("REINFORCE_action_prob", 0)
                 reinforce_sigmoid = train_reinforce("REINFORCE_sigmoid", 0)
 
@@ -201,13 +201,13 @@ def main():
             if experiment == "tabular":
                 rand = Strategy("random", 0)
                 optimal_threshold = Strategy("optimal_threshold", 0)
-                tabular_Q = train("tabular_Q", 0, 1000000)
-                mean_variance_tabular = train("mean_variance_tabular", 0.25, 1000000)
-                semi_std_dev_tabular = train("semi_std_deviation_tabular", 0.5, 1000000)
-                fishburn_tabular = train("fishburn_tabular", 0.5, 1000000)
-                cvar_tabular = train("cvar_tabular", 0.5, 1000000)
-                utility_tabular = train("utility_function_tabular", 0.0475, 1000000)
-                risk_states_tabular = train("risk_states_tabular", 2, 1000000)
+                tabular_Q = train("tabular_Q", 0, constants.tabular_learning_eps)
+                mean_variance_tabular = train("mean_variance_tabular", 0.25, constants.tabular_learning_eps)
+                semi_std_dev_tabular = train("semi_std_deviation_tabular", 0.5, constants.tabular_learning_eps)
+                fishburn_tabular = train("fishburn_tabular", 0.5, constants.tabular_learning_eps)
+                cvar_tabular = train("cvar_tabular", 0.5, constants.tabular_learning_eps)
+                utility_tabular = train("utility_function_tabular", 0.0475, constants.tabular_learning_eps)
+                risk_states_tabular = train("risk_states_tabular", 2, constants.tabular_learning_eps)
 
                 # test strategies
                 test(rand, data, random_seed, no_of_runs)
@@ -224,13 +224,13 @@ def main():
             if experiment == "network":
                 rand = Strategy("random", 0)
                 optimal_threshold = Strategy("optimal_threshold", 0)
-                network_Q = train("network_Q", 0, 1000)
-                mean_variance_network = train("mean_variance_network", 0.25, 1000)
-                semi_std_dev_network = train("semi_std_deviation_network", 0.5, 1000)
-                fishburn_network = train("fishburn_network", 0.5, 1000)
-                cvar_network = train("cvar_network", 0.5, 1000)
-                utility_network = train("utility_function_network", 0.0475, 1000)
-                risk_states_network = train("risk_states_network", 2, 1000)
+                network_Q = train("network_Q", 0, constants.network_learning_eps)
+                mean_variance_network = train("mean_variance_network", 0.25, constants.network_learning_eps)
+                semi_std_dev_network = train("semi_std_deviation_network", 0.5, constants.network_learning_eps)
+                fishburn_network = train("fishburn_network", 0.5, constants.network_learning_eps)
+                cvar_network = train("cvar_network", 0.5, constants.network_learning_eps)
+                utility_network = train("utility_function_network", 0.0475, constants.network_learning_eps)
+                risk_states_network = train("risk_states_network", 2, constants.network_learning_eps)
 
                 # test strategies
                 test(rand, data, random_seed, no_of_runs)
