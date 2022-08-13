@@ -146,7 +146,7 @@ def test(strategy, data, run, no_of_runs):
 
 def main():
 
-    for experiment in ["tabular"]:  # "non-learning", "risk-neutral", "tabular", "network"
+    for experiment in ["risk-neutral"]:  # "non-learning", "risk-neutral", "tabular", "network"
 
         print(experiment)
 
@@ -183,7 +183,7 @@ def main():
                 rand = Strategy("random", 0)
                 optimal_threshold = Strategy("optimal_threshold", 0)
                 # value_iteration = Strategy("value_iteration", 0)
-                tabular_Q = train("tabular_Q", 0, 100000)
+                tabular_Q = train("tabular_Q", 0, 1000000)
                 network_Q = train("network_Q", 0, 1000)
                 reinforce_action_prob = train_reinforce("REINFORCE_action_prob", 0)
                 reinforce_sigmoid = train_reinforce("REINFORCE_sigmoid", 0)
@@ -201,13 +201,13 @@ def main():
             if experiment == "tabular":
                 rand = Strategy("random", 0)
                 optimal_threshold = Strategy("optimal_threshold", 0)
-                tabular_Q = train("tabular_Q", 0, 100000)
-                mean_variance_tabular = train("mean_variance_tabular", 0.25, 100000)
-                semi_std_dev_tabular = train("semi_std_deviation_tabular", 0.5, 100000)
-                fishburn_tabular = train("fishburn_tabular", 0.5, 100000)
-                cvar_tabular = train("cvar_tabular", 0.5, 100000)
-                utility_tabular = train("utility_function_tabular", 0.475, 100000)
-                risk_states_tabular = train("risk_states_tabular", 2, 100000)
+                tabular_Q = train("tabular_Q", 0, 1000000)
+                mean_variance_tabular = train("mean_variance_tabular", 0.5, 1000000)
+                semi_std_dev_tabular = train("semi_std_deviation_tabular", 1, 1000000)
+                fishburn_tabular = train("fishburn_tabular", 1, 1000000)
+                cvar_tabular = train("cvar_tabular", 0.75, 1000000)
+                utility_tabular = train("utility_function_tabular", 0.5, 1000000)
+                risk_states_tabular = train("risk_states_tabular", 2, 1000000)
 
                 # test strategies
                 test(rand, data, random_seed, no_of_runs)
