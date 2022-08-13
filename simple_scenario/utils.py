@@ -81,7 +81,7 @@ def semi_std_dev(costs):
     return math.sqrt(risk)
 
 
-def bar_chart(data, title, rev):
+def bar_chart(data, title, rev, experiment):
 
     # sort dict by title entry
     # sort colors accordingly
@@ -93,17 +93,18 @@ def bar_chart(data, title, rev):
 
     df = pd.DataFrame(data)
     fig = px.bar(df, x='strategy', y=title, color='strategy', color_discrete_sequence=colors, text=title,
-                 title=title + '\t \t \t \t'
+                 title=title + '\t '
                              + 'p: ' + str(constants.new_package_prob)
                              + ', lambda: ' + str(constants.send_prob)
                              + ', energy weight: ' + str(constants.energy_weight)
-                             + '\t \t \t \t'  # + 'train eps: ' + str(constants.train_episodes) + ', '
-                             + ' test eps: ' + str(constants.test_episodes))
+                             + '\t '  # + 'train eps: ' + str(constants.train_episodes) + ', '
+                             + ' test eps: ' + str(constants.test_episodes)
+                             + ', experiment: ' + experiment)
     fig.update_layout(font=dict(size=24))
     fig.update_traces(textfont_size=30)
     # fig.show()
     fig.update_layout(autosize=False, width=1904, height=931)
-    fig.write_image("results/rn" + title + ".png")
+    fig.write_image("results/" + experiment + "_" + title + ".png")
 
 
 def sigmoid(x):

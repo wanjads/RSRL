@@ -3,12 +3,14 @@ from state import State
 from strategy import Strategy
 import constants
 import copy
-import random
 import utils
+import random
 import os
 
 # suppress tensorflow warnings
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
+# suppress gpu usage
+os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
 
 
 # train a strategy using (risk-sens.) eps-greedy q-learning
@@ -20,6 +22,7 @@ def train(strategy_type, risk_factor, train_episodes):
     strategy = Strategy(strategy_type, risk_factor)
 
     epsilon = constants.epsilon_0
+
     for episode_no in range(train_episodes):
 
         old_state = copy.deepcopy(state)
@@ -143,88 +146,112 @@ def test(strategy, data, run, no_of_runs):
 
 def main():
 
-    no_of_runs = 100
-    # data collects all costs and risks
-    data = {'strategy': [], 'avg_cost': [], 'risk': [], 'risky_states': [], 'fishburn': []}
-    for random_seed in range(no_of_runs):
+    for experiment in ["network"]:  # "non-learning", "risk-neutral", "tabular",
 
-        # set a random seed for reproducibility
-        random.seed(random_seed)
+        print(experiment)
 
-        # non-learning strategies
-        # always = Strategy("always", 0)
-        # never = Strategy("never", 0)
-        rand = Strategy("random", 0)
-        # send_once = Strategy("send_once", 0)
-        # threshold = Strategy("threshold", 0)
-        optimal_threshold = Strategy("optimal_threshold", 0)
-        # basic_monte_carlo = Strategy("basic_monte_carlo", 0)
+        no_of_runs = 100
+        # data collects all costs and risks
+        data = {'strategy': [], 'avg_cost': [], 'risk': [], 'risky_states': [], 'fishburn': []}
+        for random_seed in range(no_of_runs):
 
-        # risk-neutral learning strategies
-        # value_iteration = Strategy("value_iteration", 0)
-        tabular_Q = train("tabular_Q", 0, 100000)
-        network_Q = train("network_Q", 0, 1000)
-        reinforce_action_prob = train_reinforce("REINFORCE_action_prob", 0)
-        reinforce_sigmoid = train_reinforce("REINFORCE_sigmoid", 0)
+            print("run_no: " + str(random_seed))
+            # set a random seed for reproducibility
+            random.seed(random_seed)
 
-        # risk-sensitive tabular strategies
-        # mean_variance_tabular = train("mean_variance_tabular", 0.5, 100000)
-        # semi_std_dev_tabular = train("semi_std_deviation_tabular", 1, 100000)
-        # fishburn_tabular = train("fishburn_tabular", 1, 100000)
-        # cvar_tabular = train("cvar_tabular", 0.75, 100000)
-        # utility_tabular = train("utility_function_tabular", 0.05, 100000)
-        # risk_states_tabular = train("risk_states_tabular", 2, 100000)
+            # non-learning strategies
+            if experiment == "non-learning":
+                always = Strategy("always", 0)
+                # never = Strategy("never", 0)
+                rand = Strategy("random", 0)
+                send_once = Strategy("send_once", 0)
+                threshold = Strategy("threshold", 0)
+                optimal_threshold = Strategy("optimal_threshold", 0)
+                basic_monte_carlo = Strategy("basic_monte_carlo", 0)
 
-        # risk-sensitive network based strategies
-        # mean_variance_network = train("mean_variance_network", 0.25, 1000)
-        # semi_std_dev_network = train("semi_std_deviation_network", 0.5, 1000)
-        # fishburn_network = train("fishburn_network", 0.5, 1000)
-        # cvar_network = train("cvar_network", 0.5, 1000)
-        # utility_network = train("utility_function_network", 0.0475, 1000)
-        # risk_states_network = train("risk_states_network", 2, 1000)
+                # test strategies
+                test(always, data, random_seed, no_of_runs)
+                # test(never, data, random_seed, no_of_runs)
+                test(rand, data, random_seed, no_of_runs)
+                test(send_once, data, random_seed, no_of_runs)
+                test(threshold, data, random_seed, no_of_runs)
+                test(optimal_threshold, data, random_seed, no_of_runs)
+                test(basic_monte_carlo, data, random_seed, no_of_runs)
 
-        # test all strategies
-        # non-learning strategies
-        # test(always, data, random_seed, no_of_runs)
-        # test(never, data, random_seed, no_of_runs)
-        test(rand, data, random_seed, no_of_runs)
-        # test(send_once, data, random_seed, no_of_runs)
-        # test(threshold, data, random_seed, no_of_runs)
-        test(optimal_threshold, data, random_seed, no_of_runs)
-        # test(basic_monte_carlo, data, random_seed, no_of_runs)
+            # risk-neutral learning strategies
+            if experiment == "risk-neutral":
+                rand = Strategy("random", 0)
+                optimal_threshold = Strategy("optimal_threshold", 0)
+                # value_iteration = Strategy("value_iteration", 0)
+                tabular_Q = train("tabular_Q", 0, 100000)
+                network_Q = train("network_Q", 0, 1000)
+                reinforce_action_prob = train_reinforce("REINFORCE_action_prob", 0)
+                reinforce_sigmoid = train_reinforce("REINFORCE_sigmoid", 0)
 
-        # risk-neutral learning strategies
-        # test(value_iteration, data, random_seed, no_of_runs)
-        test(tabular_Q, data, random_seed, no_of_runs)
-        test(network_Q, data, random_seed, no_of_runs)
-        test(reinforce_action_prob, data, random_seed, no_of_runs)
-        test(reinforce_sigmoid, data, random_seed, no_of_runs)
+                # test strategies
+                test(rand, data, random_seed, no_of_runs)
+                test(optimal_threshold, data, random_seed, no_of_runs)
+                # test(value_iteration, data, random_seed, no_of_runs)
+                test(tabular_Q, data, random_seed, no_of_runs)
+                test(network_Q, data, random_seed, no_of_runs)
+                test(reinforce_action_prob, data, random_seed, no_of_runs)
+                test(reinforce_sigmoid, data, random_seed, no_of_runs)
 
-        # risk-sensitive tabular strategies
-        # test(mean_variance_tabular, data, random_seed, no_of_runs)
-        # test(semi_std_dev_tabular, data, random_seed, no_of_runs)
-        # test(fishburn_tabular, data, random_seed, no_of_runs)
-        # test(cvar_tabular, data, random_seed, no_of_runs)
-        # test(utility_tabular, data, random_seed, no_of_runs)
-        # test(risk_states_tabular, data, random_seed, no_of_runs)
+            # risk-sensitive tabular strategies
+            if experiment == "tabular":
+                rand = Strategy("random", 0)
+                optimal_threshold = Strategy("optimal_threshold", 0)
+                tabular_Q = train("tabular_Q", 0, 1000000)
+                mean_variance_tabular = train("mean_variance_tabular", 0.5, 100000)
+                semi_std_dev_tabular = train("semi_std_deviation_tabular", 1, 100000)
+                fishburn_tabular = train("fishburn_tabular", 1, 100000)
+                cvar_tabular = train("cvar_tabular", 0.75, 100000)
+                utility_tabular = train("utility_function_tabular", 0.05, 100000)
+                risk_states_tabular = train("risk_states_tabular", 2, 100000)
 
-        # risk-sensitive network based strategies
-        # test(mean_variance_network, data, random_seed, no_of_runs)
-        # test(semi_std_dev_network, data, random_seed, no_of_runs)
-        # test(fishburn_network, data, random_seed, no_of_runs)
-        # test(cvar_network, data, random_seed, no_of_runs)
-        # test(utility_network, data, random_seed, no_of_runs)
-        # test(risk_states_network, data, random_seed, no_of_runs)
+                # test strategies
+                test(rand, data, random_seed, no_of_runs)
+                test(optimal_threshold, data, random_seed, no_of_runs)
+                test(tabular_Q, data, random_seed, no_of_runs)
+                test(mean_variance_tabular, data, random_seed, no_of_runs)
+                test(semi_std_dev_tabular, data, random_seed, no_of_runs)
+                test(fishburn_tabular, data, random_seed, no_of_runs)
+                test(cvar_tabular, data, random_seed, no_of_runs)
+                test(utility_tabular, data, random_seed, no_of_runs)
+                test(risk_states_tabular, data, random_seed, no_of_runs)
 
-    # round values in data
-    for i in range(1, len(data)):
-        data[list(data.keys())[i]] = list(map(lambda x: round(x, 4), data[list(data.keys())[i]]))
+            # risk-sensitive network based strategies
+            if experiment == "network":
+                rand = Strategy("random", 0)
+                optimal_threshold = Strategy("optimal_threshold", 0)
+                network_Q = train("network_Q", 0, 1000)
+                mean_variance_network = train("mean_variance_network", 0.25, 1000)
+                semi_std_dev_network = train("semi_std_deviation_network", 0.5, 1000)
+                fishburn_network = train("fishburn_network", 0.5, 1000)
+                cvar_network = train("cvar_network", 0.5, 1000)
+                utility_network = train("utility_function_network", 0.0475, 1000)
+                risk_states_network = train("risk_states_network", 2, 1000)
 
-    # plot bar charts
-    utils.bar_chart(data, 'avg_cost', True)
-    utils.bar_chart(data, 'risk', False)
-    utils.bar_chart(data, 'risky_states', False)
-    utils.bar_chart(data, 'fishburn', False)
+                # test strategies
+                test(rand, data, random_seed, no_of_runs)
+                test(optimal_threshold, data, random_seed, no_of_runs)
+                test(network_Q, data, random_seed, no_of_runs)
+                test(mean_variance_network, data, random_seed, no_of_runs)
+                test(semi_std_dev_network, data, random_seed, no_of_runs)
+                test(fishburn_network, data, random_seed, no_of_runs)
+                test(cvar_network, data, random_seed, no_of_runs)
+                test(utility_network, data, random_seed, no_of_runs)
+                test(risk_states_network, data, random_seed, no_of_runs)
+
+        # round values in data
+        for i in range(1, len(data)):
+            data[list(data.keys())[i]] = list(map(lambda x: round(x, 4), data[list(data.keys())[i]]))
+
+        # plot bar charts
+        utils.bar_chart(data, 'avg_cost', True, experiment)
+        utils.bar_chart(data, 'risk', False, experiment)
+        utils.bar_chart(data, 'risky_states', False, experiment)
+        utils.bar_chart(data, 'fishburn', False, experiment)
 
 
 if __name__ == '__main__':

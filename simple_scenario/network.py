@@ -15,16 +15,13 @@ class NN:
         self.model.compile(optimizer=opt, loss='mean_squared_error')
 
     def out(self, inp):
-        return self.model.predict(inp)
+        return self.model(inp, training=False).numpy()
 
     def train_model(self, inp, action, cost):
-        opt = self.model.predict(inp)
+        opt = self.model(inp, training=False).numpy()
         target = cost + constants.gamma * opt[0][action]
         opt[0][action] = target
         history = self.model.fit(inp, opt, epochs=1, verbose=0)
         loss = history.history['loss'][0]
         return loss
-
-    def save_model(self):
-        self.model.save('models')
 

@@ -8,7 +8,7 @@ gamma = 0.7                                                                     
 epsilon_0 = 0.9                                                                     # for eps-greedy policy
 decay = 0.999                                                                       # decay factor for epsilon
 
-aoi_cap = 10
+aoi_cap = 100
 
 risky_aoi = 10
 

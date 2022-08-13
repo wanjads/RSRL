@@ -34,6 +34,11 @@ class State:
             self.aoi_sender = 0
 
     def as_input(self):
+
+        # for network2
+        # return [self.aoi_sender, self.aoi_receiver, self.last_action]
+
+        # for network
         return np.array([self.aoi_sender,
                          self.aoi_receiver,
                          self.last_action]).reshape((1, 3))
