@@ -150,7 +150,7 @@ def main():
 
         print(experiment)
 
-        no_of_runs = 10
+        no_of_runs = 100
         # data collects all costs and risks
         data = {'strategy': [], 'avg_cost': [], 'risk': [], 'risky_states': [], 'fishburn': []}
         for random_seed in range(no_of_runs):
@@ -201,13 +201,13 @@ def main():
             if experiment == "tabular":
                 rand = Strategy("random", 0)
                 optimal_threshold = Strategy("optimal_threshold", 0)
-                tabular_Q = train("tabular_Q", 0, 1000000)
-                mean_variance_tabular = train("mean_variance_tabular", 0.25, 1000000)
-                semi_std_dev_tabular = train("semi_std_deviation_tabular", 0.5, 1000000)
-                fishburn_tabular = train("fishburn_tabular", 0.5, 1000000)
-                cvar_tabular = train("cvar_tabular", 0.5, 1000000)
-                utility_tabular = train("utility_function_tabular", 0.475, 1000000)
-                risk_states_tabular = train("risk_states_tabular", 2, 1000000)
+                tabular_Q = train("tabular_Q", 0, 100000)
+                mean_variance_tabular = train("mean_variance_tabular", 0.25, 100000)
+                semi_std_dev_tabular = train("semi_std_deviation_tabular", 0.5, 100000)
+                fishburn_tabular = train("fishburn_tabular", 0.5, 100000)
+                cvar_tabular = train("cvar_tabular", 0.5, 100000)
+                utility_tabular = train("utility_function_tabular", 0.475, 100000)
+                risk_states_tabular = train("risk_states_tabular", 2, 100000)
 
                 # test strategies
                 test(rand, data, random_seed, no_of_runs)
