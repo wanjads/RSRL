@@ -18,6 +18,7 @@ def train(strategy_type, risk_factor, train_episodes):
     print("----------    TRAIN MODEL    ----------")
     print("strategy type: " + strategy_type)
 
+    # costs = [0]
     state = State.initial_state()
     strategy = Strategy(strategy_type, risk_factor)
 
@@ -29,6 +30,9 @@ def train(strategy_type, risk_factor, train_episodes):
         action = strategy.action(state, epsilon)
         state.update(action)
 
+        # cost = constants.energy_weight * action + state.aoi_receiver
+        # costs += [utils.running_mean(episode_no, costs[-1], cost)]
+
         epsilon = constants.decay * epsilon
 
         strategy.update(old_state, state, action, episode_no)
@@ -36,6 +40,7 @@ def train(strategy_type, risk_factor, train_episodes):
         if episode_no % int(0.2 * train_episodes) == 0:
             print(str(int(episode_no / train_episodes * 100)) + " %")
 
+    # utils.line_plot(costs)
     print("100 %")
     print("---------- TRAINING COMPLETE ----------")
     print()
@@ -146,7 +151,7 @@ def test(strategy, data, run, no_of_runs):
 
 def main():
 
-    for experiment in ["tabular"]:  # "non-learning", "risk-neutral", "tabular", "network"
+    for experiment in ["risk-neutral"]:  # "non-learning", "risk-neutral", "tabular", "network"
 
         print(experiment)
 
